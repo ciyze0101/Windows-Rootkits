@@ -1,0 +1,2 @@
+通过hook kifastcallentry 监控ssdt&sssdt表函数
+需要监控的ssdt&sssdt函数自己设置fake函数

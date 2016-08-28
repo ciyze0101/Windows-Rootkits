@@ -1,1 +1,1 @@
-Hook KiFastCallEntry to monitor ssdt&ssdt function
+Hook KiFastCallEntry to monitor ssdt&sssdt function

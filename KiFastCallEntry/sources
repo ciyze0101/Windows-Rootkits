@@ -1,0 +1,12 @@
+TARGETNAME=Monitor
+#TARGETPATH=$(BASEDIR)\lib
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+LINKER_FLAGS=/integritycheck
+INCLUDES=.\
+
+SOURCES= \
+ Monitor.c \
+ Common.c \
+ HookKiFastCallEntry.c
+

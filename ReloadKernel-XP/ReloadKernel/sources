@@ -1,0 +1,12 @@
+TARGETNAME=ReloadKernel
+#TARGETPATH=$(BASEDIR)\lib
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+
+INCLUDES=.\
+
+SOURCES= \
+  Reload.c \
+  FixRelocation.c \
+  FileSystem.c \
+  KernelReload.c

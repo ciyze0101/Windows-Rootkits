@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="DriverEntry">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="DriverEntry\KernelReload">
+      <UniqueIdentifier>{dda38ee4-2321-4f21-8ba0-414d081a97e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DriverEntry\FileSystem">
+      <UniqueIdentifier>{58661049-a681-4b2a-99a5-57d348905fcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DriverEntry\FixRelocation">
+      <UniqueIdentifier>{aa064d5f-b0b9-4817-b71a-b701ea68a2d7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Reload.h">
+      <Filter>DriverEntry</Filter>
+    </ClInclude>
+    <ClInclude Include="KernelReload.h">
+      <Filter>DriverEntry\KernelReload</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem.h">
+      <Filter>DriverEntry\FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FixRelocation.h">
+      <Filter>DriverEntry\FixRelocation</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sources" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Reload.c">
+      <Filter>DriverEntry</Filter>
+    </ClCompile>
+    <ClCompile Include="KernelReload.c">
+      <Filter>DriverEntry\KernelReload</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem.c">
+      <Filter>DriverEntry\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FixRelocation.c">
+      <Filter>DriverEntry\FixRelocation</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

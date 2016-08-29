@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include=".\struct.h" />
+    <ClCompile Include=".\common.h" />
+    <ClCompile Include="GetVersion.c">
+      <Filter>Version</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Duba.h">
+      <Filter>主</Filter>
+    </ClCompile>
+    <ClCompile Include=".\Duba.c">
+      <Filter>主</Filter>
+    </ClCompile>
+    <ClCompile Include="GetModules.c">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Other.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Hook.c">
+      <Filter>Hook</Filter>
+    </ClCompile>
+    <ClCompile Include="HookKiFastCall.c">
+      <Filter>Hook</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Version">
+      <UniqueIdentifier>{1a80e802-9dc2-4604-85cc-6da6dcc0e5d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="主">
+      <UniqueIdentifier>{0937d5a0-a3b3-400f-9fd1-92a70919c74c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{9241517a-1236-4442-8064-25f83e311a3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Other">
+      <UniqueIdentifier>{2cd24aae-61e9-4fa9-9b35-942f2a8c7c39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hook">
+      <UniqueIdentifier>{80f98e2e-5c61-4bc0-ab89-149b72cc73ce}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GetVersion.h">
+      <Filter>Version</Filter>
+    </ClInclude>
+    <ClInclude Include="GetModules.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Other.h">
+      <Filter>Other</Filter>
+    </ClInclude>
+    <ClInclude Include="Hook.h">
+      <Filter>Hook</Filter>
+    </ClInclude>
+    <ClInclude Include="HookKiFastCall.h">
+      <Filter>Hook</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sources">
+      <Filter>主</Filter>
+    </None>
+  </ItemGroup>
+</Project>

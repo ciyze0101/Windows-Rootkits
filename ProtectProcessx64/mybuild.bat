@@ -1,0 +1,3 @@
+set WLHBASE=C:\WINDDK\7600.16385.0
+set WDF_ROOT=C:\WINDDK\7600.16385.0
+ddkbuild.cmd -WLH chk . -cZ -WDF

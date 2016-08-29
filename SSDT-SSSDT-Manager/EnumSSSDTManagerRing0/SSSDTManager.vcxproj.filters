@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include=".\SSSDTManager.c">
+      <Filter>主</Filter>
+    </ClCompile>
+    <ClCompile Include=".\SSSDTManager.h">
+      <Filter>主</Filter>
+    </ClCompile>
+    <ClCompile Include="GetService.c">
+      <Filter>GetService</Filter>
+    </ClCompile>
+    <ClCompile Include="SSSDT.c">
+      <Filter>SSSDT</Filter>
+    </ClCompile>
+    <ClCompile Include="SSDT.c">
+      <Filter>SSDT</Filter>
+    </ClCompile>
+    <ClCompile Include="common.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SSDT.h">
+      <Filter>SSDT</Filter>
+    </ClInclude>
+    <ClInclude Include="SSSDT.h">
+      <Filter>SSSDT</Filter>
+    </ClInclude>
+    <ClInclude Include="GetService.h">
+      <Filter>GetService</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="GetService">
+      <UniqueIdentifier>{9c8c8498-bbb4-4a13-81b2-f0eea18e93d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SSDT">
+      <UniqueIdentifier>{4171004b-fcfa-4f02-8b85-aad1ddeb3e8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SSSDT">
+      <UniqueIdentifier>{73acb7ea-0cf4-4cca-91d3-007a3881e8f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="主">
+      <UniqueIdentifier>{b133cbb0-9897-4b1f-b44c-a8121be3745c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

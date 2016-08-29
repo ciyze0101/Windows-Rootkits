@@ -1,0 +1,14 @@
+TARGETNAME=SSSDTManager
+#TARGETPATH=$(BASEDIR)\lib
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+
+INCLUDES=.\
+
+SOURCES= \
+ SSSDTManager.c \
+ GetService.c \
+ SSDT.c \
+ SSSDT.c \
+ common.c
+

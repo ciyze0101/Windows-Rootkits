@@ -1,0 +1,1 @@
+Enum Module By NtQueryVirtualMemory

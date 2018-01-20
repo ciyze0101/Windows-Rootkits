@@ -1,0 +1,13 @@
+TARGETNAME=ProcessManagerDrv
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+LINKER_FLAGS=/integritycheck
+INCLUDES=.\
+
+SOURCES= \
+ProcessManagerDrv.c \
+Common.c \
+EnumProcess.c \
+HideProcess.c \
+MonitorWin7.c
+

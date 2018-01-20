@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="EnumProcess.c">
+      <Filter>EnumProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="HideProcess.c">
+      <Filter>HideProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="MonitorWin7.c">
+      <Filter>Monitor</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessManagerDrv.c" />
+    <ClCompile Include="Common.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{57c7e7f0-7b36-459d-8c6a-647d959ae304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EnumProcess">
+      <UniqueIdentifier>{62d67f48-23b0-40b3-9706-cb7451af6410}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HideProcess">
+      <UniqueIdentifier>{4b5ac423-064f-4c32-881e-db7832ec10b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Monitor">
+      <UniqueIdentifier>{1b22565b-0dd8-4ba8-9b2e-16e799ca542d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EnumProcess.h">
+      <Filter>EnumProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="HideProcess.h">
+      <Filter>HideProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="MonitorWin7.h">
+      <Filter>Monitor</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessManagerDrv.h" />
+    <ClInclude Include="Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

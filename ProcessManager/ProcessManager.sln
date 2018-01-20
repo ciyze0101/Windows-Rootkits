@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessManager", "ProcessManager\ProcessManager.vcxproj", "{4845A0BA-A0B5-4469-BD9F-AF259356D017}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProcessManagerDrv", "ProcessManagerDrv\ProcessManagerDrv.vcxproj", "{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+		WinDDK|Win32 = WinDDK|Win32
+		WinDDK|x64 = WinDDK|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Debug|Win32.Build.0 = Debug|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Debug|x64.ActiveCfg = Debug|x64
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Debug|x64.Build.0 = Debug|x64
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Release|Win32.ActiveCfg = Release|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Release|Win32.Build.0 = Release|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Release|x64.ActiveCfg = Release|x64
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.Release|x64.Build.0 = Release|x64
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.WinDDK|Win32.ActiveCfg = Release|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.WinDDK|Win32.Build.0 = Release|Win32
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.WinDDK|x64.ActiveCfg = Release|x64
+		{4845A0BA-A0B5-4469-BD9F-AF259356D017}.WinDDK|x64.Build.0 = Release|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Debug|Win32.ActiveCfg = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Debug|x64.ActiveCfg = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Debug|x64.Build.0 = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Release|Win32.ActiveCfg = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Release|x64.ActiveCfg = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.Release|x64.Build.0 = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.WinDDK|Win32.ActiveCfg = WinDDK|Win32
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.WinDDK|Win32.Build.0 = WinDDK|Win32
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.WinDDK|x64.ActiveCfg = WinDDK|x64
+		{6125FD2D-6C93-486E-BDE4-6B97CE5F9B87}.WinDDK|x64.Build.0 = WinDDK|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -11,7 +11,7 @@ NTSTATUS EventToKernelEvent(PULONG_PTR InputBuffer,ULONG_PTR InSize)
 	NTSTATUS   Status = STATUS_SUCCESS;
 	PULONG_PTR HandleArray = NULL;
 	ULONG i = 0;
-	HandleArray = (PULONG_PTR)InputBuffer;   //’‚¿ÔºÊ»›32Bit ”Î 64 Œª
+	HandleArray = (PULONG_PTR)InputBuffer;   //ËøôÈáåÂÖºÂÆπ32Bit ‰∏é 64 ‰Ωç
 
 	for (i=0;i<InSize;i++)
 	{
@@ -66,7 +66,7 @@ NTSTATUS  RegisterProcessFilter()
 	DbgPrint("register");
 
 #ifdef _WIN64
-	Status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)ProcessCallBackWin7,FALSE);   //ÃÌº”“ª∏ˆ Ω¯≥Ã ¥¥Ω®µƒªÿµ˜Notity
+	Status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)ProcessCallBackWin7,FALSE);   //Ê∑ªÂä†‰∏Ä‰∏™ ËøõÁ®ã ÂàõÂª∫ÁöÑÂõûË∞ÉNotity
 
 	if (!NT_SUCCESS(Status))
 		{
@@ -103,12 +103,12 @@ VOID
 			memset(wzProcessPath,0,sizeof(wzProcessPath));
 
 
-			AcquireResourceExclusive(&Resource);//…Í«Îª•≥‚◊ ‘¥
+			AcquireResourceExclusive(&Resource);
 
-			KeSetEvent(EventArray[0],IO_NO_INCREMENT,FALSE);	  //Õ®÷™Ring3≤„ ”–Ω¯≥Ã¥¥Ω®
+			KeSetEvent(EventArray[0],IO_NO_INCREMENT,FALSE);	  
 			KeResetEvent(EventArray[0]);
 			Status = KeWaitForMultipleObjects(2,
-				&EventArray[1],                        //1∫≈ ¬º˛ ∑≈––   2∫≈ ¬º˛◊Ë÷π
+				&EventArray[1],                        
 				WaitAny,
 				Executive,
 				KernelMode,
@@ -116,7 +116,7 @@ VOID
 				NULL,
 				NULL);
 
-			if (Status == 0)    //¥˙±Ì‘À––
+			if (Status == 0)   
 			{	
 
 			}
@@ -139,7 +139,7 @@ VOID
 
 
 
-//«Î«Û“ª∏ˆª•≥‚◊ ‘¥
+//ËØ∑Ê±Ç‰∏Ä‰∏™‰∫íÊñ•ËµÑÊ∫ê
 FORCEINLINE
 	VOID
 	AcquireResourceExclusive(IN OUT PERESOURCE Resource)
@@ -152,7 +152,7 @@ FORCEINLINE
 }
 
 
-// Õ∑≈ª•≥‚◊ ‘¥
+//ÈáäÊîæ‰∫íÊñ•ËµÑÊ∫ê
 FORCEINLINE
 	VOID
 	ReleaseResource(IN OUT PERESOURCE Resource)

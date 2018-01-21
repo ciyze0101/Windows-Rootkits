@@ -51,7 +51,7 @@ VOID RemoveNodeFromActiveProcessLinks(ULONG_PTR ProcessId)
 	if (MmIsAddressValid(Temp))
 	{
 		//    Temp->Blink->Flink = Temp->Flink;
-		//    Temp->Flink->Blink = Temp->Blink;   //Êı¾İ½á¹¹
+		//    Temp->Flink->Blink = Temp->Blink;   //æ•°æ®ç»“æ„
 		RemoveEntryList(Temp);
 
 	}
@@ -69,7 +69,7 @@ VOID RemoveNodeFromActiveProcessLinks(ULONG_PTR ProcessId)
 
 VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
 {
-	PHANDLE_TABLE   HandleTable = NULL;    // Ö¸Ïò¾ä±ú±íµÄÖ¸Õë   
+	PHANDLE_TABLE   HandleTable = NULL;    // æŒ‡å‘å¥æŸ„è¡¨çš„æŒ‡é’ˆ   
 	ULONG_PTR uTableCode = 0;  
 	ULONG uFlag = 0;
 
@@ -118,7 +118,7 @@ VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
 
 
 
-//uTableCode  ÒÑ¾­ÇåÁË×îºóÁ½Î»
+//uTableCode  å·²ç»æ¸…äº†æœ€åä¸¤ä½
 NTSTATUS EnumTable11(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 {
 
@@ -153,7 +153,7 @@ NTSTATUS EnumTable11(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 					if (MmIsAddressValid(HandleTableEntry->Object))
 					{
 
-						Object = (PVOID)(((ULONG_PTR)HandleTableEntry->Object)  & 0xFFFFFFFFFFFFFFF8);  //È¥µôµÍÈıÎ»
+						Object = (PVOID)(((ULONG_PTR)HandleTableEntry->Object)  & 0xFFFFFFFFFFFFFFF8);  //å»æ‰ä½ä¸‰ä½
 						if(ClearPspCidTable((PEPROCESS)Object,ProcessId)==TRUE)
 						{
 							WPOFF();
@@ -212,7 +212,7 @@ BOOLEAN ClearPspCidTable(PEPROCESS EProcess, ULONG_PTR PrcessId)
 	{ 
 
 		if (!IsProcessDie(EProcess)&&
-			NT_SUCCESS(ObReferenceObjectByPointer(EProcess, 0, NULL, KernelMode)))  //ÒòÎªÒª²Ù×÷¸Ã¶ÔÏóËùÒÔÔö¼ÓÒıÓÃ¼ÆÊı
+			NT_SUCCESS(ObReferenceObjectByPointer(EProcess, 0, NULL, KernelMode)))  //å› ä¸ºè¦æ“ä½œè¯¥å¯¹è±¡æ‰€ä»¥å¢åŠ å¼•ç”¨è®¡æ•°
 		{
 			DbgPrint("PspCidTable ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)EProcess+ProcessIdOfEprocess)),(char*)((ULONG_PTR)EProcess+ProcessImageNameOfEprocess));
 		
@@ -234,13 +234,13 @@ VOID WPOFF()
 	cr0 =__readcr0();
 	cr0 &= 0xfffffffffffeffff;
 	__writecr0(cr0);
-	//    _disable();                      //Õâ¾ä»° ÆÁ±ÎÒ²Ã»ÓĞÉ¶
+	_disable();                      
 }
 VOID WPON()
 {
 	ULONG_PTR cr0=__readcr0();
 	cr0 |= 0x10000;
-	//    _enable();                      //Õâ¾ä»° ÆÁ±ÎÒ²Ã»ÓĞÉ¶
+	_enable();                    
 	__writecr0(cr0);
 	KeLowerIrql(Irql);
 }

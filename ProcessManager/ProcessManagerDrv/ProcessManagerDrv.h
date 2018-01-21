@@ -1,15 +1,7 @@
 /***************************************************************************************
-* AUTHOR : MZ
-* DATE   : 2015-3-5
+* AUTHOR : LycorisGuard
+* DATE   : 2018-1-20
 * MODULE : ProcessManagerDrv.H
-*
-* IOCTRL Sample Driver
-*
-* Description:
-*		Demonstrates communications between USER and KERNEL.
-*
-****************************************************************************************
-* Copyright (C) 2010 MZ.
 ****************************************************************************************/
 
 #ifndef CXX_PROCESSMANAGERRING0_H
@@ -31,12 +23,12 @@
 #define CTL_ENUMPROCESSPSPCIDTABLE \
 	CTL_CODE(FILE_DEVICE_UNKNOWN,0x832,METHOD_NEITHER,FILE_ANY_ACCESS)
 
-//Òþ²Ø½ø³Ì
+//Ã’Ã¾Â²Ã˜Â½Ã¸Â³ÃŒ
 #define CTL_HIDEPROCESS \
 	CTL_CODE(FILE_DEVICE_UNKNOWN,0x833,METHOD_NEITHER,FILE_ANY_ACCESS)
 
 
-//½ø³Ì¼à¿Ø
+//Â½Ã¸Â³ÃŒÂ¼Ã Â¿Ã˜
 #define CTL_MONITORPROCESS \
 	CTL_CODE(FILE_DEVICE_UNKNOWN,0x834,METHOD_NEITHER,FILE_ANY_ACCESS)
 #define CTL_GETRPROCESSINFOR \

@@ -1,4 +1,4 @@
-// Monitor.cpp : ÊµÏÖÎÄ¼þ
+// Monitor.cpp : å®žçŽ°æ–‡ä»¶
 //
 
 #include "stdafx.h"
@@ -10,7 +10,7 @@
 extern CCommon Common;
 
 #define WM_DLG  WM_USER+10
-// CMonitor ¶Ô»°¿ò
+// CMonitor å¯¹è¯æ¡†
 HANDLE  g_hEvent[3] = {0};
 IMPLEMENT_DYNAMIC(CMonitor, CDialogEx)
 
@@ -42,17 +42,17 @@ BEGIN_MESSAGE_MAP(CMonitor, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CMonitor ÏûÏ¢´¦Àí³ÌÐò
+// CMonitor æ¶ˆæ¯å¤„ç†ç¨‹åº
 
 
 BOOL CMonitor::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// TODO:  ÔÚ´ËÌí¼Ó¶îÍâµÄ³õÊ¼»¯
+	// TODO:  åœ¨æ­¤æ·»åŠ é¢å¤–çš„åˆå§‹åŒ–
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// Òì³£: OCX ÊôÐÔÒ³Ó¦·µ»Ø FALSE
+	// å¼‚å¸¸: OCX å±žæ€§é¡µåº”è¿”å›ž FALSE
 }
 
 
@@ -66,7 +66,7 @@ DWORD CMonitor::ThreadProc(LPVOID lPParam)
 	ULONG i = 0;
 	for (i=0;i<3;i++)
 	{
-		g_hEvent[i] = CreateEvent(NULL,TRUE,FALSE,NULL);//´´½¨Ò»¸ö³õÊ¼Î´ÊÜÐÅ£¬ÊÖ¶¯ÊÜÐÅµÄÊÂ¼þ
+		g_hEvent[i] = CreateEvent(NULL,TRUE,FALSE,NULL);
 	}
 
 	dwRet = DeviceIoControl(Common.DeviceHandle,CTL_MONITORPROCESS,
@@ -124,7 +124,7 @@ LRESULT CMonitor::OnNotifyDlg(WPARAM wParam,LPARAM lParam)
 
 	if (Msg.ulCreate==0)
 	{
-		CString  strTemp = L"½ø³ÌÏú»Ù\r\n";
+		CString  strTemp = L"è¿›ç¨‹é”€æ¯\r\n";
 
 
 		strTemp+=Msg.wzProcessPath;
@@ -135,7 +135,7 @@ LRESULT CMonitor::OnNotifyDlg(WPARAM wParam,LPARAM lParam)
 
 	else
 	{
-		CString  strTemp = L"½ø³Ì´´½¨\r\n";
+		CString  strTemp = L"è¿›ç¨‹åˆ›å»º\r\n";
 		
 		strTemp+=Msg.wzProcessPath;
 	

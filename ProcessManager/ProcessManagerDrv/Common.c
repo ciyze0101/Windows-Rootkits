@@ -12,7 +12,7 @@ WIN_VERSION GetWindowsVersion()
 	pfnRtlGetVersion RtlGetVersion = NULL;
 	WIN_VERSION WinVersion;
 	WCHAR wzRtlGetVersion[] = L"RtlGetVersion";
-	RtlGetVersion = GetFunctionAddressByName(wzRtlGetVersion);    //Ntoskrnl.exe  µ¼³ö±í
+	RtlGetVersion = GetFunctionAddressByName(wzRtlGetVersion);   
 	if (RtlGetVersion)
 	{
 		RtlGetVersion((PRTL_OSVERSIONINFOW)&osverInfo); 
@@ -60,8 +60,8 @@ PVOID
 	PVOID AddrBase = NULL;
 	if (wzFunction && wcslen(wzFunction) > 0)
 	{
-		RtlInitUnicodeString(&uniFunction, wzFunction);      //³£Á¿Ö¸Õë
-		AddrBase = MmGetSystemRoutineAddress(&uniFunction);  //ÔÚSystem ½ø³Ì  µÚÒ»¸öÄ£¿é  Ntosknrl.exe  ExportTable
+		RtlInitUnicodeString(&uniFunction, wzFunction);      
+		AddrBase = MmGetSystemRoutineAddress(&uniFunction);  
 	}
 	return AddrBase;
 }
@@ -97,7 +97,7 @@ ULONG_PTR KeGetObjectType(PVOID Object)
 	}
 	else 
 	{
-		//¸ß°æ±¾Ê¹ÓÃº¯Êý
+		//é«˜ç‰ˆæœ¬ä½¿ç”¨å‡½æ•°
 
 		ObGetObjectType = (pfnObGetObjectType)GetFunctionAddressByName(L"ObGetObjectType");
 

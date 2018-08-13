@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<DEFECTS>
-<OACRDEFECTCOUNT>3</OACRDEFECTCOUNT>
-<OACRERRORCOUNT>0</OACRERRORCOUNT>
-<DEFECT _seq="1"><SFA><LINE>11</LINE><COLUMN>0</COLUMN><FILENAME>hideprocess.c</FILENAME><FILEPATH>c:\users\administrator\documents\github\windows-rootkits\hideprocess\</FILEPATH></SFA><DEFECTCODE>28101</DEFECTCODE><DESCRIPTION>The Drivers module has inferred that the current function is a DRIVER_INITIALIZE function:  This is informational only. No problem has been detected.</DESCRIPTION><FUNCTION>DriverEntry</FUNCTION><FUNCLINE>11</FUNCLINE><PATH/></DEFECT>
-<DEFECT _seq="2"><SFA><LINE>15</LINE><COLUMN>28</COLUMN><FILENAME>hideprocess.c</FILENAME><FILEPATH>c:\users\administrator\documents\github\windows-rootkits\hideprocess\</FILEPATH></SFA><DEFECTCODE>28155</DEFECTCODE><DESCRIPTION>The function being assigned or passed should be a DRIVER_UNLOAD function:  Add the declaration 'DRIVER_UNLOAD UnloadDriver;' before the current first declaration of UnloadDriver.</DESCRIPTION><FUNCTION>DriverEntry</FUNCTION><FUNCLINE>11</FUNCLINE><PATH/></DEFECT>
-<DEFECT _seq="3"><SFA><LINE>98</LINE><COLUMN>14</COLUMN><FILENAME>hideprocess.c</FILENAME><FILEPATH>c:\users\administrator\documents\github\windows-rootkits\hideprocess\</FILEPATH></SFA><DEFECTCODE>28159</DEFECTCODE><DESCRIPTION>Consider using 'RtlGetVersion' instead of 'PsGetVersion'. Reason: Obsolete.</DESCRIPTION><FUNCTION>GetWindowsVersion</FUNCTION><FUNCLINE>83</FUNCLINE><PATH/></DEFECT>
-</DEFECTS>

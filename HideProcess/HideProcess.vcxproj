@@ -7,7 +7,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>"{4EE67C57-BE79-4CD7-B3B0-94AECE62DB41}"</ProjectGuid>
+    <ProjectGuid>{4EE67C57-BE79-4CD7-B3B0-94AECE62DB41}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>"HideProcess"</RootNamespace>
   </PropertyGroup>

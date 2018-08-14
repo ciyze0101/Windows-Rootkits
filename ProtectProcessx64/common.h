@@ -4,10 +4,10 @@
 * MODULE : common.h
 *
 * Command: 
-*	IOCTRL Common Header
+*    IOCTRL Common Header
 *
 * Description:
-*	Common data for the IoCtrl driver and application
+*    Common data for the IoCtrl driver and application
 *
 ****************************************************************************************
 * Copyright (C) 2010 MZ.

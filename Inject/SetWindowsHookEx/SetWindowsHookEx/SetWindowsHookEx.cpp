@@ -45,30 +45,24 @@ BOOL InstallSetWindowsHookEx(ULONG ProcessId,BOOL Hook)
 		if ( Thread32First ( hThreadSnap, &te32 ) )  
 		{  
 			do{  
-				if(te32.th32OwnerProcessID==ProcessId)
+				if(te32.th32OwnerProcessID == ProcessId)
 				{
 					Handle = SetWindowsHookEx(WH_KEYBOARD,TestAddress,hModule,te32.th32ThreadID);
 					if(Handle == NULL)
-					{int a = GetLastError();
-
-						cout<<"The KeyBoard could not be hooked"<<endl;
+					{
+						printf("The KeyBoard could not be hooked LastError [%d]\n", GetLastError());
 						getchar();
 						return FALSE;
 					}
 				}
-			}while ( Thread32Next ( hThreadSnap, &te32 ) ) ;  
-		}  
-
-		
-		CloseHandle ( hThreadSnap ) ;  
-
-	
+			}while (Thread32Next(hThreadSnap, &te32));  
+		}  	
+		CloseHandle (hThreadSnap);	
 	}
 	else
 	{
 		UnhookWindowsHookEx(Handle);  
-	}
-	
+	}	
 }
 
 

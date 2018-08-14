@@ -55,11 +55,11 @@
   <ItemGroup>
     <ClCompile Include=".\ZwQueryVirtualMemory.c" />
     <ClCompile Include=".\ZwQueryVirtualMemory.h" />
-    <ClCompile Include="CommonR0.c" />
+    <ClCompile Include="Common.c" />
     <ClCompile Include="GetSSDTFuncAddress.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CommonR0.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="GetSSDTFuncAddress.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

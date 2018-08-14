@@ -1,0 +1,12 @@
+TARGETNAME=ZwQueryVirtualMemory
+#TARGETPATH=$(BASEDIR)\lib
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+
+INCLUDES=.\
+
+SOURCES= \
+ ZwQueryVirtualMemory.c \
+ GetSSDTFuncAddress.c \
+ Common.c 
+

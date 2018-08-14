@@ -11,3 +11,4 @@ in x86
 ntdll->kernel32
 
 the offset in the PEB is different from x64 and x86
+This demo is only Test on Win7 x64

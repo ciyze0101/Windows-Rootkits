@@ -23,11 +23,18 @@ VOID WPON();
 
 //获取版本信息
 typedef enum WIN_VERSION {
-	WINDOWS_UNKNOW,
-	WINDOWS_XP,
-	WINDOWS_7,
-	WINDOWS_8,
-	WINDOWS_8_1
+    WINDOWS_XP,
+    WINDOWS_7_7600,
+    WINDOWS_7_7601,
+    WINDOWS_8_9200,
+    WINDOWS_8_9600,
+    WINDOWS_10_10240,
+    WINDOWS_10_10586,
+    WINDOWS_10_14393,
+    WINDOWS_10_15063,
+    WINDOWS_10_16299,
+    WINDOWS_10_17134,
+    WINDOWS_UNKNOW
 } WIN_VERSION;
 
 //Windows版本信息
@@ -38,13 +45,7 @@ typedef
 	NTSTATUS 
 	(*pfnRtlGetVersion)(OUT PRTL_OSVERSIONINFOW lpVersionInformation);
 
-
-
 BOOLEAN SafeCopyMemory(PVOID DestiAddress, PVOID SourAddress, SIZE_T SizeOfCopy);
-
-
-
-
 
 
 typedef struct _KLDR_DATA_TABLE_ENTRY64 {

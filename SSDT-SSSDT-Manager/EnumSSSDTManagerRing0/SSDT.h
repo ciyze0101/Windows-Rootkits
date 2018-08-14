@@ -2,30 +2,17 @@
 #include "SSSDTManager.h"
 #include "common.h"
 
-
-
 PVOID GetKeServiceDescriptorTable64();
-
-
-
-
 
 PVOID GetSSDTFunctionAddress64(ULONG_PTR ulIndex,ULONG_PTR SSDTDescriptor);
 PVOID GetSSDTFunctionAddress32(ULONG_PTR ulIndex,ULONG_PTR SSDTDescriptor);
 
-
 BOOLEAN GetSysModuleByLdrDataTableSSDT(WCHAR* wzModuleName);
 NTSTATUS GetSysModuleByLdrDataTable2(PVOID Address,WCHAR* wzModuleName);
 
-VOID  UnHookSSDT(ULONG ulIndex, ULONG OriginalFunctionAddress);
+VOID  UnHookSSDT(ULONG ulIndex, ULONG_PTR OriginalFunctionAddress);
 
 BOOLEAN ResumeSSDTInlineHook(ULONG ulIndex,UCHAR* szOriginalFunctionCode);
-
-
-
-
-
-
 
 typedef enum _SYSTEM_INFORMATION_CLASS {
 	SystemBasicInformation,
@@ -112,7 +99,6 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 	SystemFileCacheInformationEx,
 	MaxSystemInfoClass  
 } SYSTEM_INFORMATION_CLASS;
-
 
 //在系统模块中遍历
 extern

@@ -1,12 +1,8 @@
 #include "GetService.h"
 
-
-
-
 PVOID GetKeShadowServiceDescriptorTable64()
 {
 	PUCHAR StartAddress = (PUCHAR)__readmsr(0xC0000082);
-
 	PUCHAR i = NULL;
 	UCHAR v1=0,v2=0,v3=0;
 	int       iOffset = 0;
@@ -22,7 +18,6 @@ PVOID GetKeShadowServiceDescriptorTable64()
 			{
 				memcpy(&iOffset,i+3,4);
 				SSSDTDescriptor = iOffset + (ULONG_PTR)i + 7;
-
 				/*
 
 				: kd> u fffff800`03ed7640 l 100
@@ -35,10 +30,7 @@ PVOID GetKeShadowServiceDescriptorTable64()
 				fffff800`03ed7772 4c8d15c7202300  lea     r10,[nt!KeServiceDescriptorTable (fffff800`04109840)]
 				fffff800`03ed7779 4c8d1d00212300  lea     r11,[nt!KeServiceDescriptorTableShadow (fffff800`04109880)
 				*/
-
-
 				SSSDTDescriptor+=32;
-
 				return (PVOID)SSSDTDescriptor;
 			}
 		}
@@ -46,13 +38,9 @@ PVOID GetKeShadowServiceDescriptorTable64()
 	return 0;
 }
 
-
-
-
 PVOID GetKeShadowServiceDescriptorTable32()
 {
 	WCHAR wzKeAddSystemServiceTable[] = L"KeAddSystemServiceTable";
-
 	ULONG_PTR SSSDTDescriptor = 0;
 	PUCHAR i = 0;
 	PUCHAR StartAddress;
@@ -70,10 +58,8 @@ PVOID GetKeShadowServiceDescriptorTable32()
 	805b4002 83b82035568000  cmp     dword ptr nt!KeServiceDescriptorTable (80563520)[eax],0
 	805b4009 753f            jne     nt!KeAddSystemServiceTable+0x6b (805b404a)
 	805b400b 8d88e0345680    lea     ecx,nt!KeServiceDescriptorTableShadow (805634e0)[eax]
-
 	*/
 	StartAddress = (PUCHAR)GetFunctionAddressByNameFromNtosExport(wzKeAddSystemServiceTable);
-
 	if (StartAddress==NULL)
 	{
 		return 0;
@@ -89,18 +75,12 @@ PVOID GetKeShadowServiceDescriptorTable32()
 			{
 				SSSDTDescriptor = *(ULONG_PTR*)(i+2);
 				SSSDTDescriptor = SSSDTDescriptor + 16;
-
-
 				return (PVOID)SSSDTDescriptor;
 			}
-
 		}
 	}
-
 	return 0;
 }
-
-
 
 PVOID 
 	GetFunctionAddressByNameFromNtosExport(WCHAR *wzFunctionName)
@@ -139,7 +119,7 @@ PVOID GetKeServiceDescriptorTable64()
 			if( b1==0x4c && b2==0x8d && b3==0x15 ) 
 			{
 				memcpy(&ulv1,i+3,4);
-				FunctionAddress = (ULONG_PTR)ulv1 + (ULONG_PTR)i + 7;
+				FunctionAddress = (PVOID)((ULONG_PTR)ulv1 + (ULONG_PTR)i + 7);
 				return FunctionAddress;
 			}
 		}

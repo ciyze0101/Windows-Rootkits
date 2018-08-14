@@ -1,6 +1,5 @@
 #include "SSDT.h"
 
-
 extern ULONG_PTR  SSDTDescriptor;
 extern PDRIVER_OBJECT   CurrentDriverObject;
 extern PVOID            SysSSDTModuleBase;
@@ -15,9 +14,8 @@ PVOID GetSSDTFunctionAddress64(ULONG_PTR ulIndex,ULONG_PTR SSDTDescriptor)
 	ulv2 = ServiceTableBase + 4 * ulIndex;
 	ulv1 = *(PLONG)ulv2;
 	ulv1 = ulv1>>4;
-	return ServiceTableBase + (ULONG_PTR)ulv1;
+	return (PVOID)(ServiceTableBase + (ULONG_PTR)ulv1);
 }
-
 
 PVOID GetSSDTFunctionAddress32(ULONG_PTR ulIndex,ULONG_PTR SSDTDescriptor)
 {
@@ -26,13 +24,8 @@ PVOID GetSSDTFunctionAddress32(ULONG_PTR ulIndex,ULONG_PTR SSDTDescriptor)
 
 	ServiceTableBase=(ULONG)(SSDT ->ServiceTableBase);
 
-	return (*(PULONG_PTR)(ServiceTableBase + 4 * ulIndex));
+	return (PVOID)(*(PULONG_PTR)(ServiceTableBase + 4 * ulIndex));
 }
-
-
-
-
-
 
 /**/
 BOOLEAN GetSysModuleByLdrDataTableSSDT(WCHAR* wzModuleName)
@@ -42,18 +35,14 @@ BOOLEAN GetSysModuleByLdrDataTableSSDT(WCHAR* wzModuleName)
 	{
 		PLDR_DATA_TABLE_ENTRY ListHead = NULL, ListNext = NULL;
 
-
-
 		ListHead = ListNext = (PLDR_DATA_TABLE_ENTRY)CurrentDriverObject->DriverSection;  //dt _DriverObject
-
 		while((PLDR_DATA_TABLE_ENTRY)ListNext->InLoadOrderLinks.Flink != ListHead)
 		{
-
 			//DbgPrint("%wZ\r\n",&ListNext->BaseDllName);
 			if (ListNext->BaseDllName.Buffer&& 														
-				wcsstr(ListNext->BaseDllName.Buffer,wzModuleName)!=NULL)
+				wcsstr((WCHAR*)(ListNext->BaseDllName.Buffer),wzModuleName)!=NULL)
 			{
-				SysSSDTModuleBase = ListNext->DllBase;
+				SysSSDTModuleBase = (PVOID)(ListNext->DllBase);
 				ulSSDTSysModuleSize = ListNext->SizeOfImage;
 
 				//DbgPrint("%x    %x\r\n",ListNext->DllBase,ListNext->EntryPoint);
@@ -62,11 +51,9 @@ BOOLEAN GetSysModuleByLdrDataTableSSDT(WCHAR* wzModuleName)
 				bRet = TRUE;
 				break;
 			}
-
 			ListNext = (PLDR_DATA_TABLE_ENTRY)ListNext->InLoadOrderLinks.Flink;
 		}
 	}
-
 	return bRet;
 }
 
@@ -82,19 +69,16 @@ NTSTATUS GetSysModuleByLdrDataTable2(PVOID Address,WCHAR* wzModuleName)
 		PKLDR_DATA_TABLE_ENTRY ListHead = NULL, ListNext = NULL;
 
 		ListHead = ListNext = (PKLDR_DATA_TABLE_ENTRY)CurrentDriverObject->DriverSection;  //dt _DriverObject
-		
 		while((PKLDR_DATA_TABLE_ENTRY)ListNext->InLoadOrderLinks.Flink != ListHead)
 		{
-
 			ulBase = (ListNext)->DllBase;
 			ulSize = (ListNext)->SizeOfImage;
 			if(ulBase!=0)
 			{
-				if(Address>ulBase&&Address<ulSize+ulBase)
+				if((ULONG_PTR)Address>ulBase && (ULONG_PTR)Address < ulSize + ulBase)
 				{
 					__try
 					{
-
 						DbgPrint("%wZ\r\n",&ListNext->BaseDllName);
 						DbgPrint("%wZ\r\n",&(ListNext->FullDllName));
 
@@ -109,7 +93,6 @@ NTSTATUS GetSysModuleByLdrDataTable2(PVOID Address,WCHAR* wzModuleName)
 					break;
 				} 
 			}
-
 			ListNext = (PKLDR_DATA_TABLE_ENTRY)ListNext->InLoadOrderLinks.Flink;
 		}
 	}
@@ -171,9 +154,7 @@ NTSTATUS GetSysModuleByLdrDataTable2(PVOID Address,WCHAR* wzModuleName)
 	return FALSE;*/
 }
 
-
-
-VOID  UnHookSSDT(ULONG ulIndex, ULONG OriginalFunctionAddress)
+VOID  UnHookSSDT(ULONG ulIndex, ULONG_PTR OriginalFunctionAddress)
 {
 #ifdef _WIN64
 	ULONG_PTR v2 = 0;
@@ -209,27 +190,16 @@ VOID  UnHookSSDT(ULONG ulIndex, ULONG OriginalFunctionAddress)
 
 BOOLEAN ResumeSSDTInlineHook(ULONG ulIndex,UCHAR* szOriginalFunctionCode)
 {
-
 	PVOID  CurrentFunctionAddress = NULL;
-
 #ifdef _WIN64
-
 	CurrentFunctionAddress = GetSSDTFunctionAddress64(ulIndex,SSDTDescriptor);
-
-
 #else
 	CurrentFunctionAddress = GetSSDTFunctionAddress32(ulIndex,SSDTDescriptor);
-
 #endif
 
 	WPOFF();
-
 	SafeCopyMemory(CurrentFunctionAddress,szOriginalFunctionCode,CODE_LENGTH);  
-
 	WPON();
 
-
 	return TRUE;
-
-
 }

@@ -10,68 +10,100 @@ VOID WPOFF()
 	cr0 =__readcr0();
 	cr0 &= 0xfffffffffffeffff;
 	__writecr0(cr0);
-	//	_disable();                      //这句话 屏蔽也没有啥
+#ifdef _WIN64
+    _disable();
+#endif
 }
 
 VOID WPON()
 {
 	ULONG_PTR cr0=__readcr0();
 	cr0 |= 0x10000;
-	//	_enable();                      //这句话 屏蔽也没有啥
+#ifdef _WIN64
+    _enable();
+#endif
 	__writecr0(cr0);
 	KeLowerIrql(Irql);
 }
+
 WIN_VERSION GetWindowsVersion()
 {
-	RTL_OSVERSIONINFOEXW osverInfo = {sizeof(osverInfo)}; 
-	pfnRtlGetVersion RtlGetVersion = NULL;
-	WIN_VERSION WinVersion;
-	WCHAR wzRtlGetVersion[] = L"RtlGetVersion";
+    RTL_OSVERSIONINFOEXW osverInfo = {sizeof(osverInfo)}; 
+    pfnRtlGetVersion RtlGetVersion = NULL;
+    WIN_VERSION WinVersion;
+    WCHAR szRtlGetVersion[] = L"RtlGetVersion";
 
-	RtlGetVersion = GetFunctionAddressByName(wzRtlGetVersion);    //Ntoskrnl.exe  导出表
-	if (RtlGetVersion)
-	{
-		RtlGetVersion((PRTL_OSVERSIONINFOW)&osverInfo); 
-	} 
-	else 
-	{
-		PsGetVersion(&osverInfo.dwMajorVersion, &osverInfo.dwMinorVersion, &osverInfo.dwBuildNumber, NULL);   //Documet
-	}
+    RtlGetVersion = (pfnRtlGetVersion)GetFunctionAddressByName(szRtlGetVersion); 
 
-	DbgPrint("Build Number: %d\r\n", osverInfo.dwBuildNumber);
+    if (RtlGetVersion)
+    {
+        RtlGetVersion((PRTL_OSVERSIONINFOW)&osverInfo); 
+    } 
+    else 
+    {
+        PsGetVersion(&osverInfo.dwMajorVersion, &osverInfo.dwMinorVersion, &osverInfo.dwBuildNumber, NULL);
+    }
 
-	if (osverInfo.dwMajorVersion == 5 && osverInfo.dwMinorVersion == 1) 
-	{
-		DbgPrint("WINDOWS_XP\r\n");
-		WinVersion = WINDOWS_XP;
-	}
-	else if (osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1)
-	{
-		DbgPrint("WINDOWS 7\r\n");
-		WinVersion = WINDOWS_7;
-	}
-	else if (osverInfo.dwMajorVersion == 6 && 
-		osverInfo.dwMinorVersion == 2 &&
-		osverInfo.dwBuildNumber == 9200)
-	{
-		DbgPrint("WINDOWS 8\r\n");
-		WinVersion = WINDOWS_8;
-	}
-	else if (osverInfo.dwMajorVersion == 6 && 
-		osverInfo.dwMinorVersion == 3 && 
-		osverInfo.dwBuildNumber == 9600)
-	{
-		DbgPrint("WINDOWS 8.1\r\n");
-		WinVersion = WINDOWS_8_1;
-	}
-	else
-	{
-		DbgPrint("WINDOWS_UNKNOW\r\n");
-		WinVersion = WINDOWS_UNKNOW;
-	}
+    //x64位支持
+    if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1 && osverInfo.dwBuildNumber == 7600)
+    {
+        DbgPrint("WINDOWS 7\r\n");
+        WinVersion = WINDOWS_7_7600;
+    }
+    else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 1 && osverInfo.dwBuildNumber == 7601)
+    {
+        DbgPrint("WINDOWS 7\r\n");
+        WinVersion = WINDOWS_7_7601;
+    }
+    else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 2 && osverInfo.dwBuildNumber == 9200)
+    {
+        DbgPrint("WINDOWS 8\r\n");
+        WinVersion = WINDOWS_8_9200;
+    }
+    else if(osverInfo.dwMajorVersion == 6 && osverInfo.dwMinorVersion == 3 && osverInfo.dwBuildNumber == 9600)
+    {
+        DbgPrint("WINDOWS 8.1\r\n");
+        WinVersion = WINDOWS_8_9600;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 10240)
+    {
+        DbgPrint("WINDOWS 10 10240\r\n");
+        WinVersion = WINDOWS_10_10240;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 10586)
+    {
+        DbgPrint("WINDOWS 10 10586\r\n");
+        WinVersion = WINDOWS_10_10586;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 14393)
+    {
+        DbgPrint("WINDOWS 10 14393\r\n");
+        WinVersion = WINDOWS_10_14393;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 15063)
+    {
+        DbgPrint("WINDOWS 10 15063\r\n");
+        WinVersion = WINDOWS_10_15063;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 16299)
+    {
+        DbgPrint("WINDOWS 10 16299\r\n");
+        WinVersion = WINDOWS_10_16299;
+    }
+    else if(osverInfo.dwMajorVersion == 10 && osverInfo.dwMinorVersion == 0 && osverInfo.dwBuildNumber == 17134)
+    {
+        DbgPrint("WINDOWS 10 17134\r\n");
+        WinVersion = WINDOWS_10_17134;
+    }
+    else
+    {
+        DbgPrint("This is a new os\r\n");
+        WinVersion = WINDOWS_UNKNOW;
+    }
 
-	return WinVersion;
+    return WinVersion;
 }
+
 
 
 PVOID 
@@ -88,10 +120,6 @@ PVOID
 
 	return AddrBase;
 }
-
-
-
-
 
 BOOLEAN SafeCopyMemory(PVOID DestiAddress, PVOID SourAddress, SIZE_T SizeOfCopy)
 {
@@ -126,5 +154,4 @@ BOOLEAN SafeCopyMemory(PVOID DestiAddress, PVOID SourAddress, SIZE_T SizeOfCopy)
 	MmUnlockPages(Mdl);
 	IoFreeMdl(Mdl);
 	return TRUE;
-
 }

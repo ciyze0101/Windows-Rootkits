@@ -1,7 +1,7 @@
 TARGETNAME=ProcessManagerDrv
 TARGETPATH=obj
 TARGETTYPE=DRIVER
-LINKER_FLAGS=/integritycheck
+
 INCLUDES=.\
 
 SOURCES= \

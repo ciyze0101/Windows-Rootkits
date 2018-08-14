@@ -1,13 +1,9 @@
-
-
 #ifndef CXX_PROCESSMANAGERRING0_H
 #	include "ProcessManagerDrv.h"
 #include "EnumProcess.h"
 #include "HideProcess.h"
 #include "MonitorWin7.h"
 #endif
-
-
 
 
 WIN_VERSION WinVersion = WINDOWS_UNKNOW;
@@ -30,7 +26,7 @@ ULONG_PTR FatherOfEprocess = 0;
 
 ULONG_PTR PspCidTable = 0;
 
-PEPROCESS g_EProcess = NULL;
+PEPROCESS g_SystemProcess = NULL;
 MSG         Msg = {0};
 PKEVENT         EventArray[3] = {0}; 
 
@@ -87,10 +83,10 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING pRegistryString)
 		return status;
 	}	
 
-
 	WinVersion = GetWindowsVersion();
 	switch(WinVersion)
 	{
+#ifdef _WIN32
 	case WINDOWS_XP:
 		{
 			ProcessIdOfEprocess = 0x84;
@@ -111,6 +107,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING pRegistryString)
 			FatherOfEprocess = 0x14c;
 			break;
 		}
+#else
 	case WINDOWS_7:
 		{
 			ProcessIdOfEprocess  = 0x180;
@@ -128,10 +125,13 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING pRegistryString)
 			break;
 
 		}
+#endif
+    default:
+        return STATUS_NOT_SUPPORTED;
 	}
 
 	PspCidTable = GetPspCidTableAddress();
-	g_EProcess = PsGetCurrentProcess();
+	g_SystemProcess = PsGetCurrentProcess();
 
 	return STATUS_SUCCESS;
 }

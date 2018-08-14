@@ -7,64 +7,55 @@ extern ULONG_PTR ProcessImageNameOfEprocess;
 
 extern ULONG_PTR PspCidTable;
 
-
-
 KIRQL Irql;
 VOID RemoveNodeFromActiveProcessLinks(ULONG_PTR ProcessId)
 {
 	NTSTATUS status;
-
-	LIST_ENTRY  *pListEntry;
-	PEPROCESS	Eprocess;
-	ULONG_PTR ActiveOffsetPre = 0x8c;
-	ULONG_PTR ActiveOffsetNext = 0x88;
+	PEPROCESS	Process;
+	ULONG_PTR ActiveOffsetPre = 0;
+	ULONG_PTR ActiveOffsetNext = 0;
 	PLIST_ENTRY Temp = NULL;
+
 	switch(WinVersion)
 	{
-	case WINDOWS_XP:   //32Bits
-		{
-			ActiveOffsetPre =  0x8c;
-			ActiveOffsetNext = 0x88;
-			break;
-		}
-	case WINDOWS_7:   //64Bits 
-		{
-			ActiveOffsetPre =  0x190;
-			ActiveOffsetNext = 0x188;
-			break;
-		}
+#ifdef _WIN32
+    case WINDOWS_XP:   //32Bits
+        {
+            ActiveOffsetPre =  0x8c;
+            ActiveOffsetNext = 0x88;
+            break;
+        }
+#else
+    case WINDOWS_7:   //64Bits 
+        {
+            ActiveOffsetPre =  0x190;
+            ActiveOffsetNext = 0x188;
+            break;
+        }
+#endif
+    default:
+        return;
 	}
-	status = PsLookupProcessByProcessId((HANDLE)ProcessId,&Eprocess);
+
+	status = PsLookupProcessByProcessId((HANDLE)ProcessId,&Process);
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrint("PsLookupProcessByProcessId Error!\n");
 		return ;
 	}
 		
-		DbgPrint("PsLookupProcessByProcessId Success!\n");
-	//pListEntry = (LIST_ENTRY *)((ULONG)Eprocess + Active_List);
-
-
-	//EProcessPre = (PEPROCESS)((ULONG_PTR)(*((ULONG_PTR*)((ULONG_PTR)EProcessCurrent+ActiveOffsetPre)))-ActiveOffsetNext);
-	Temp = (PLIST_ENTRY)((ULONG_PTR)Eprocess+ActiveOffsetNext);
-	DbgPrint("ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)Eprocess+ProcessIdOfEprocess)),(char*)((ULONG_PTR)Eprocess+ProcessImageNameOfEprocess));
+	Temp = (PLIST_ENTRY)((ULONG_PTR)Process + ActiveOffsetNext);
+	DbgPrint("ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)Process + ProcessIdOfEprocess)),(char*)((ULONG_PTR)Process + ProcessImageNameOfEprocess));
 	if (MmIsAddressValid(Temp))
 	{
-		//    Temp->Blink->Flink = Temp->Flink;
-		//    Temp->Flink->Blink = Temp->Blink;   //数据结构
 		RemoveEntryList(Temp);
-
 	}
 
-	//RemoveEntryList(pListEntry);
+    if(Process)
+        ObDereferenceObject(Process);
 
-	//pListEntry->Flink->Blink = pListEntry->Blink;
-	//pListEntry->Blink->Flink = pListEntry->Flink;
-	
-	ObDereferenceObject(Eprocess);
+    return;
 }
-
-
 
 
 VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
@@ -73,13 +64,14 @@ VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
 	ULONG_PTR uTableCode = 0;  
 	ULONG uFlag = 0;
 
-	DbgPrint("join");
-	HandleTable = (PHANDLE_TABLE)(*(ULONG_PTR*)PspCidTable);  
+	if(PspCidTable == NULL)
+        return;
 
+	HandleTable = (PHANDLE_TABLE)(*(ULONG_PTR*)PspCidTable);  
 
 	if (HandleTable && MmIsAddressValid((PVOID)HandleTable))
 	{
-		uTableCode = (ULONG_PTR)(HandleTable->TableCode) & 0xFFFFFFFFFFFFFFFC;  ;
+		uTableCode = (ULONG_PTR)(HandleTable->TableCode) & 0xFFFFFFFFFFFFFFFC;
 		if (uTableCode && MmIsAddressValid((PVOID)uTableCode))
 		{
 			uFlag = (ULONG)(HandleTable->TableCode) & 0x03;    //00  01  10  
@@ -88,26 +80,19 @@ VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
 			{
 			case 0:
 				{
-					DbgPrint("One");
 					EnumTable11(uTableCode,ProcessId);
 					break;
 				}
 			case 1:
 				{
-					DbgPrint("Two");
 					EnumTable12(uTableCode,ProcessId);
 					break;
 				}
-
-
 			case 2:
 				{
-					DbgPrint("Three");
 					EnumTable13(uTableCode,ProcessId);
 					break; 
 				}
-
-
 			default:
 				KdPrint(("TableCode error\n"));
 			} 			
@@ -116,31 +101,34 @@ VOID EraseObjectFromHandleTable1(ULONG_PTR ProcessId)
 }
 
 
-
-
 //uTableCode  已经清了最后两位
 NTSTATUS EnumTable11(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 {
-
-
 	PVOID  Object = NULL;
 	PHANDLE_TABLE_ENTRY HandleTableEntry = NULL;  
 	ULONG uIndex = 0;
 	ULONG_PTR ulOffset = 0;
 	switch(WinVersion)
 	{
-	case WINDOWS_XP:
-		{
-			ulOffset = 0x8;
-			break;
-		}
-	case WINDOWS_7:
-		{
-			ulOffset = 0x10;
-			break;
-		}
+#ifdef _WIN32
+    case WINDOWS_XP:
+        {
+            ulOffset = 0x8;
+            break;
+        }
+#else
+    case WINDOWS_7:
+        {
+            ulOffset = 0x10;
+            break;
+        }
+#endif
+    default:
+        return STATUS_INVALID_PARAMETER;
 	}
-	HandleTableEntry = (PHANDLE_TABLE_ENTRY)((ULONG_PTR)(*(ULONG_PTR*)uTableCode) + ulOffset); //xp offset 0x08  
+
+	HandleTableEntry = (PHANDLE_TABLE_ENTRY)((ULONG_PTR)(*(ULONG_PTR*)uTableCode) + ulOffset); 
+    //xp offset 0x08  
 	//Win7 offset 0x10
 	for (uIndex = 0;uIndex<511; uIndex++ )  
 	{  
@@ -152,7 +140,6 @@ NTSTATUS EnumTable11(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 				{  
 					if (MmIsAddressValid(HandleTableEntry->Object))
 					{
-
 						Object = (PVOID)(((ULONG_PTR)HandleTableEntry->Object)  & 0xFFFFFFFFFFFFFFF8);  //去掉低三位
 						if(ClearPspCidTable((PEPROCESS)Object,ProcessId)==TRUE)
 						{
@@ -160,12 +147,9 @@ NTSTATUS EnumTable11(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 							memset(HandleTableEntry,0,sizeof(HANDLE_TABLE_ENTRY));
 							WPON();
 						}
-
 					}
-
 				}
 			}
-
 		}
 		HandleTableEntry++;  
 	}  
@@ -181,12 +165,10 @@ NTSTATUS EnumTable12(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 	{  
 		EnumTable11(uTableCode,ProcessId);  
 		uTableCode += sizeof(ULONG_PTR);  
-	} while (*(PULONG_PTR)uTableCode != 0&&MmIsAddressValid((PVOID)*(PULONG_PTR)uTableCode));  
+	} while (*(PULONG_PTR)uTableCode != 0 && MmIsAddressValid((PVOID)*(PULONG_PTR)uTableCode));  
 
 	return STATUS_SUCCESS;
 }
-
-
 
 NTSTATUS EnumTable13(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 {
@@ -199,28 +181,24 @@ NTSTATUS EnumTable13(ULONG_PTR uTableCode,ULONG_PTR ProcessId)
 	return STATUS_SUCCESS;  
 }
 
-
-
-
-BOOLEAN ClearPspCidTable(PEPROCESS EProcess, ULONG_PTR PrcessId)
+BOOLEAN ClearPspCidTable(PEPROCESS Process, ULONG_PTR PrcessId)
 {
 	KAPC_STATE ApcState;
 	PPEB  Peb = NULL;
 	ULONG_PTR  ulProcessParamters = 0;
 
-	if (EProcess && MmIsAddressValid((PVOID)EProcess) && KeGetObjectType((PVOID)EProcess) == (ULONG_PTR)*PsProcessType)
+	if (Process && MmIsAddressValid((PVOID)Process) && KeGetObjectType((PVOID)Process) == (ULONG_PTR)*PsProcessType)
 	{ 
-
-		if (!IsProcessDie(EProcess)&&
-			NT_SUCCESS(ObReferenceObjectByPointer(EProcess, 0, NULL, KernelMode)))  //因为要操作该对象所以增加引用计数
+		if (!IsProcessDie(Process)&&
+			NT_SUCCESS(ObReferenceObjectByPointer(Process, 0, NULL, KernelMode)))  //因为要操作该对象所以增加引用计数
 		{
-			DbgPrint("PspCidTable ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)EProcess+ProcessIdOfEprocess)),(char*)((ULONG_PTR)EProcess+ProcessImageNameOfEprocess));
+			DbgPrint("PspCidTable ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)Process + ProcessIdOfEprocess)),(char*)((ULONG_PTR)Process + ProcessImageNameOfEprocess));
 		
-			if(PrcessId == *(ULONG_PTR*)((ULONG_PTR)EProcess+ProcessIdOfEprocess))
+			if(PrcessId == *(ULONG_PTR*)((ULONG_PTR)Process + ProcessIdOfEprocess))
 			{
 				return TRUE;
 			}
-			ObfDereferenceObject(EProcess);
+			ObfDereferenceObject(Process);
 		}
 	} 
 

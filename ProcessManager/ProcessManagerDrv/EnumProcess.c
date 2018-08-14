@@ -1,26 +1,21 @@
 #include "EnumProcess.h"
 #include "Common.h"
 
-
 extern WIN_VERSION WinVersion;
 extern ULONG_PTR ProcessIdOfEprocess;
 extern ULONG_PTR ProcessImageNameOfEprocess;
-
-
 
 extern ULONG_PTR ulProcessParametersOfPeb;
 extern ULONG_PTR ulImagePathNameOfProcessParameters;
 
 extern ULONG_PTR Active_List;
 
-
 extern ULONG_PTR PebOfEProcess;
 
 extern ULONG_PTR PspCidTable;
 extern ULONG_PTR FatherOfEprocess;
 
-
-extern PEPROCESS g_EProcess;
+extern PEPROCESS g_SystemProcess;
 
 ULONG_PTR SectionObjectOfEProcess = 0;
 NTSTATUS EnumProcessByOpenProcess(PVOID OutputBuffer,ULONG_PTR uOutSize)
@@ -29,7 +24,7 @@ NTSTATUS EnumProcessByOpenProcess(PVOID OutputBuffer,ULONG_PTR uOutSize)
 	HANDLE ProcessHandle = NULL;
 	CLIENT_ID Cid = {0};
 	OBJECT_ATTRIBUTES oa = {0};
-	PEPROCESS EProcess = NULL;
+	PEPROCESS Process = NULL;
 	ULONG_PTR i = 0;
 	PROCESS_BASIC_INFORMATION pbi;
 	PVOID Buffer = NULL;
@@ -39,10 +34,9 @@ NTSTATUS EnumProcessByOpenProcess(PVOID OutputBuffer,ULONG_PTR uOutSize)
 	ULONG_PTR  ulProcessParamters = 0;
 	ULONG_PTR ulProcessNameLen = 0;
 	ULONG_PTR ulCnt = (uOutSize-sizeof(PROCESS_INFORMATION_OWN))/sizeof(PROCESS_INFORMATION_ENTRY);
-	DbgPrint("2");
-	for(i=0;i<0x1000;i+=4)
+
+	for(i = 0; i < 0x1000; i += 4)
 	{
-		DbgPrint("3");
 		Cid.UniqueProcess = (HANDLE)i;
 		Cid.UniqueThread = 0;
 		status = ZwOpenProcess(&ProcessHandle,GENERIC_ALL,&oa,&Cid);
@@ -52,24 +46,24 @@ NTSTATUS EnumProcessByOpenProcess(PVOID OutputBuffer,ULONG_PTR uOutSize)
 				GENERIC_ALL,
 				NULL,
 				KernelMode,
-				&EProcess,
+				&Process,
 				NULL);
-			if(!IsProcessDie(EProcess))
+			if(!IsProcessDie(Process))
 			{
 				ULONG_PTR ulCurrentCnt = ((PPROCESS_INFORMATION_OWN)OutputBuffer)->NumberOfEntry;
-				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Eprocess = (ULONG_PTR)EProcess;
-				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Pid =  *(ULONG*)((ULONG_PTR)EProcess + ProcessIdOfEprocess);
-				ulProcessNameLen = strlen((const char*)PsGetProcessImageFileName(EProcess));
+				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Eprocess = (ULONG_PTR)Process;
+				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Pid =  *(ULONG*)((ULONG_PTR)Process + ProcessIdOfEprocess);
+				ulProcessNameLen = strlen((const char*)PsGetProcessImageFileName(Process));
 				//通过EProcess获得进程名称
-				memcpy(((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessName,(const char*)PsGetProcessImageFileName(EProcess),ulProcessNameLen);  
+				memcpy(((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessName,(const char*)PsGetProcessImageFileName(Process),ulProcessNameLen);  
 			
-				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ParentId =  *(ULONG*)((ULONG_PTR)EProcess + FatherOfEprocess);
-				DbgPrint("ZwOpenProcess ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)EProcess+ProcessIdOfEprocess)),(char*)((ULONG_PTR)EProcess+ProcessImageNameOfEprocess));
+				((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ParentId =  *(ULONG*)((ULONG_PTR)Process + FatherOfEprocess);
+				DbgPrint("ZwOpenProcess ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)Process+ProcessIdOfEprocess)),(char*)((ULONG_PTR)Process+ProcessImageNameOfEprocess));
 			
-				GetProcessPathBySectionObject(EProcess,((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessPath);
+				GetProcessPathBySectionObject(Process,((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessPath);
 				((PPROCESS_INFORMATION_OWN)OutputBuffer)->NumberOfEntry++;
 			}
-			ObDereferenceObject(EProcess);   //解引用
+			ObDereferenceObject(Process);   //解引用
 			ZwClose(ProcessHandle);
 		}
 		memset(&oa,0,sizeof(OBJECT_ATTRIBUTES));
@@ -77,10 +71,8 @@ NTSTATUS EnumProcessByOpenProcess(PVOID OutputBuffer,ULONG_PTR uOutSize)
 	return STATUS_SUCCESS;
 }
 
-
 NTSTATUS EnumProcessByActiveList(PPROCESS_INFORMATION_OWN OutputBuffer,ULONG_PTR OutSize)
 {
-
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
 	PLIST_ENTRY ListHead = NULL;
@@ -88,36 +80,36 @@ NTSTATUS EnumProcessByActiveList(PPROCESS_INFORMATION_OWN OutputBuffer,ULONG_PTR
 	PETHREAD EThread = NULL;
 	CHAR PreMode;
 	ULONG_PTR ulCnt = (OutSize - sizeof(PROCESS_INFORMATION_OWN)) / sizeof(PROCESS_INFORMATION_ENTRY);
-	PEPROCESS EProcess = g_EProcess;
+	PEPROCESS Process = g_SystemProcess;
 	KAPC_STATE ApcState;
 	PPEB  Peb = NULL;
 	ULONG_PTR  ulProcessParamters = 0;
 
-	if(EProcess!=NULL)
+	if(Process!=NULL)
 	{
-		ListHead = ListTemp = (PLIST_ENTRY)((ULONG_PTR)EProcess + Active_List);  //system.exe
+		ListHead = ListTemp = (PLIST_ENTRY)((ULONG_PTR)Process + Active_List);  //system.exe
 		ListHead = ListHead->Blink;
 
 		while (ListTemp!=ListHead)
 		{
 			ULONG_PTR  ulCurrentCnt = OutputBuffer->NumberOfEntry;
-			EProcess = (PEPROCESS)((ULONG_PTR)ListTemp-Active_List);
-			((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Eprocess = (ULONG_PTR)EProcess;
-			DbgPrint("ActiveList ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)EProcess+ProcessIdOfEprocess)),(char*)((ULONG_PTR)EProcess+ProcessImageNameOfEprocess));
-			OutputBuffer->Entry[ulCurrentCnt].Pid = *((ULONG*)((ULONG_PTR)EProcess+ProcessIdOfEprocess));
-			strcpy(OutputBuffer->Entry[ulCurrentCnt].ProcessName,(char*)((ULONG_PTR)EProcess + ProcessImageNameOfEprocess));
+			Process = (PEPROCESS)((ULONG_PTR)ListTemp-Active_List);
+			((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].Eprocess = (ULONG_PTR)Process;
+			DbgPrint("ActiveList ID:%d  %s\r\n",*((ULONG_PTR*)((ULONG_PTR)Process + ProcessIdOfEprocess)),(char*)((ULONG_PTR)Process + ProcessImageNameOfEprocess));
+			OutputBuffer->Entry[ulCurrentCnt].Pid = *((ULONG*)((ULONG_PTR)Process + ProcessIdOfEprocess));
+			strcpy(OutputBuffer->Entry[ulCurrentCnt].ProcessName,(char*)((ULONG_PTR)Process + ProcessImageNameOfEprocess));
 
-			((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ParentId =  *(ULONG*)((ULONG_PTR)EProcess + FatherOfEprocess);
-			GetProcessPathBySectionObject(EProcess,((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessPath);
+			((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ParentId =  *(ULONG*)((ULONG_PTR)Process + FatherOfEprocess);
+			GetProcessPathBySectionObject(Process,((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurrentCnt].ProcessPath);
 			/*
-			Peb = PsGetProcessPeb(EProcess);     //获得PEB
+			Peb = PsGetProcessPeb(Process);     //获得PEB
 			if (Peb==NULL) 
 			{
 				return FALSE;
 			}
-			KeStackAttachProcess(EProcess, &ApcState);
+			KeStackAttachProcess(Process, &ApcState);
 
-			ulProcessParamters = *(ULONG_PTR*)((ULONG_PTR)Peb+ulProcessParametersOfPeb);//0x20
+			ulProcessParamters = *(ULONG_PTR*)((ULONG_PTR)Peb + ulProcessParametersOfPeb);//0x20
 
 			memcpy(((PPROCESS_INFORMATION_OWN)OutputBuffer)->Entry[ulCurCnt].ProcessPath,((PUNICODE_STRING)(ulProcessParamters+ulImagePathNameOfProcessParameters))->Buffer,
 				((PUNICODE_STRING)(ulProcessParamters+ulImagePathNameOfProcessParameters))->Length);//0x60
@@ -129,9 +121,6 @@ NTSTATUS EnumProcessByActiveList(PPROCESS_INFORMATION_OWN OutputBuffer,ULONG_PTR
 	}
 	return STATUS_SUCCESS;
 }
-
-
-
 
 NTSTATUS EnumProcessByPspCidTable(PPROCESS_INFORMATION_OWN OutputBuffer,ULONG_PTR OutSize)
 {
@@ -150,8 +139,6 @@ NTSTATUS EnumProcessByPspCidTable(PPROCESS_INFORMATION_OWN OutputBuffer,ULONG_PT
 	}
 	return Status;
 }
-
-
 
 ULONG_PTR GetPspCidTableAddress()  
 {  
@@ -172,6 +159,7 @@ ULONG_PTR GetPspCidTableAddress()
 
 	switch(WinVersion)
 	{
+#ifdef _WIN64
 	case WINDOWS_7:
 		{
 			
@@ -210,7 +198,7 @@ ULONG_PTR GetPspCidTableAddress()
 			}  
 			break;
 		}
-
+#else
 	case WINDOWS_XP:
 		{
 			/*
@@ -241,13 +229,13 @@ ULONG_PTR GetPspCidTableAddress()
 			}  
 			break;
 		}
+#endif
+    default: 
+        return 0;
 	}
-	
 
 	return ulPspCidTableValue;  
 }  
-
-
 
 VOID ScanHandleTableToEnumProcess(PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_PTR ulCnt)
 {
@@ -255,12 +243,11 @@ VOID ScanHandleTableToEnumProcess(PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_P
 	ULONG_PTR uTableCode = 0;  
 	ULONG uFlag = 0;
 
-
 	HandleTable = (PHANDLE_TABLE)(*(ULONG_PTR*)PspCidTable);  
 
 	if (HandleTable && MmIsAddressValid((PVOID)HandleTable))
 	{
-		uTableCode = (ULONG_PTR)(HandleTable->TableCode) & 0xFFFFFFFFFFFFFFFC;  ;
+		uTableCode = (ULONG_PTR)(HandleTable->TableCode) & 0xFFFFFFFFFFFFFFFC;
 		if (uTableCode && MmIsAddressValid((PVOID)uTableCode))
 		{
 			uFlag = (ULONG)(HandleTable->TableCode) & 0x03;    //00  01  10  
@@ -284,8 +271,6 @@ VOID ScanHandleTableToEnumProcess(PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_P
 					EnumTable3(uTableCode,OutputBuffer, ulCnt);
 					break; 
 				}
-
-
 			default:
 				KdPrint(("TableCode error\n"));
 			} 			
@@ -293,32 +278,34 @@ VOID ScanHandleTableToEnumProcess(PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_P
 	}
 }
 
-
-
-
 //uTableCode  已经清了最后两位
 NTSTATUS EnumTable1(ULONG_PTR uTableCode,PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_PTR ulCnt)
 {
-
-
 	PVOID  Object = NULL;
 	PHANDLE_TABLE_ENTRY HandleTableEntry = NULL;  
 	ULONG uIndex = 0;
 	ULONG_PTR ulOffset = 0;
 	switch(WinVersion)
 	{
+#ifdef _WIN32
 	case WINDOWS_XP:
 		{
 			ulOffset = 0x8;
 			break;
 		}
+#else
 	case WINDOWS_7:
 		{
 			ulOffset = 0x10;
 			break;
 		}
+#endif
+    default:
+        return STATUS_NOT_SUPPORTED;
 	}
-	HandleTableEntry = (PHANDLE_TABLE_ENTRY)((ULONG_PTR)(*(ULONG_PTR*)uTableCode) + ulOffset); //xp offset 0x08  
+
+	HandleTableEntry = (PHANDLE_TABLE_ENTRY)((ULONG_PTR)(*(ULONG_PTR*)uTableCode) + ulOffset); 
+    //xp offset 0x08  
 	//Win7 offset 0x10
 	for (uIndex = 0;uIndex<511; uIndex++ )  
 	{  
@@ -330,25 +317,17 @@ NTSTATUS EnumTable1(ULONG_PTR uTableCode,PPROCESS_INFORMATION_OWN OutputBuffer, 
 				{  
 					if (MmIsAddressValid(HandleTableEntry->Object))
 					{
-
 						Object = (PVOID)(((ULONG_PTR)HandleTableEntry->Object)  & 0xFFFFFFFFFFFFFFF8);  
 						InsertProcess((PEPROCESS)Object,OutputBuffer, ulCnt);
-
 					}
-
 				}
 			}
-
 		}
-
 		HandleTableEntry++;  
-
 	}  
 
 	return STATUS_SUCCESS;
 }
-
-
 
 NTSTATUS EnumTable2(ULONG_PTR uTableCode,PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_PTR ulCnt)
 {
@@ -357,12 +336,10 @@ NTSTATUS EnumTable2(ULONG_PTR uTableCode,PPROCESS_INFORMATION_OWN OutputBuffer, 
 		DbgPrint("Two");
 		EnumTable1(uTableCode,OutputBuffer,ulCnt);  
 		uTableCode += sizeof(ULONG_PTR);  
-	} while (*(PULONG_PTR)uTableCode != 0&&MmIsAddressValid((PVOID)*(PULONG_PTR)uTableCode));  
+	} while (*(PULONG_PTR)uTableCode != 0 && MmIsAddressValid((PVOID)*(PULONG_PTR)uTableCode));  
 
 	return STATUS_SUCCESS;
 }
-
-
 
 NTSTATUS EnumTable3(ULONG_PTR uTableCode, PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_PTR ulCnt)
 {
@@ -374,9 +351,6 @@ NTSTATUS EnumTable3(ULONG_PTR uTableCode, PPROCESS_INFORMATION_OWN OutputBuffer,
 
 	return STATUS_SUCCESS;  
 }
-
-
-
 
 VOID InsertProcess(PEPROCESS EProcess, PPROCESS_INFORMATION_OWN OutputBuffer, ULONG_PTR ulCnt)
 {
@@ -421,8 +395,6 @@ VOID InsertProcess(PEPROCESS EProcess, PPROCESS_INFORMATION_OWN OutputBuffer, UL
 	} 
 }
 
-
-
 BOOLEAN  GetProcessPathBySectionObject(PEPROCESS EProcess,WCHAR* wzProcessPath)
 {
 	PSECTION_OBJECT32   SectionObject32   = NULL;
@@ -435,6 +407,7 @@ BOOLEAN  GetProcessPathBySectionObject(PEPROCESS EProcess,WCHAR* wzProcessPath)
 	BOOLEAN             bGetPath = FALSE;
 	switch(WinVersion)
 	{
+#ifdef _WIN32
 	case WINDOWS_XP:
 		{
 			SectionObjectOfEProcess = 0x138;
@@ -467,6 +440,7 @@ BOOLEAN  GetProcessPathBySectionObject(PEPROCESS EProcess,WCHAR* wzProcessPath)
 			}
 			break;
 		}
+#else
 	case WINDOWS_7:
 		{
 			SectionObjectOfEProcess = 0x268;
@@ -496,15 +470,14 @@ BOOLEAN  GetProcessPathBySectionObject(PEPROCESS EProcess,WCHAR* wzProcessPath)
 									return TRUE;
 							}
 						}
-
-
 					}
-
 				}
-
 			}
 			break;
 		}
+#endif
+    default:
+        return FALSE;
 	}
 	return TRUE;
 }
@@ -528,12 +501,12 @@ BOOLEAN GetPathByFileObject(PFILE_OBJECT FileObject, WCHAR* wzPath)
 				{
 					NTSTATUS  Status = STATUS_UNSUCCESSFUL;
 					ULONG ulRet= 0;
-					PVOID     Buffer = ExAllocatePool(PagedPool,0x1000);
+					POBJECT_NAME_INFORMATION Buffer = (POBJECT_NAME_INFORMATION)ExAllocatePool(PagedPool,0x1000);
 					if (Buffer)
 					{
 						// ObQueryNameString :C:\Program Files\VMware\VMware Tools\VMwareTray.exe
 						memset(Buffer, 0, 0x1000);
-						Status = ObQueryNameString((PVOID)FileObject, (POBJECT_NAME_INFORMATION)Buffer, 0x1000, &ulRet);
+						Status = ObQueryNameString((PVOID)FileObject, Buffer, 0x1000, &ulRet);
 						if (NT_SUCCESS(Status))
 						{
 							POBJECT_NAME_INFORMATION Temp = (POBJECT_NAME_INFORMATION)Buffer;

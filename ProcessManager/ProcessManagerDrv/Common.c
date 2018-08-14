@@ -12,7 +12,7 @@ WIN_VERSION GetWindowsVersion()
 	pfnRtlGetVersion RtlGetVersion = NULL;
 	WIN_VERSION WinVersion;
 	WCHAR wzRtlGetVersion[] = L"RtlGetVersion";
-	RtlGetVersion = GetFunctionAddressByName(wzRtlGetVersion);   
+	RtlGetVersion = (pfnRtlGetVersion)GetFunctionAddressByName(wzRtlGetVersion);   
 	if (RtlGetVersion)
 	{
 		RtlGetVersion((PRTL_OSVERSIONINFOW)&osverInfo); 
@@ -67,11 +67,6 @@ PVOID
 }
 
 
-
-
-
-
-
 ULONG_PTR KeGetObjectType(PVOID Object)
 {
 	ULONG_PTR ObjectType = 0;
@@ -100,8 +95,6 @@ ULONG_PTR KeGetObjectType(PVOID Object)
 		//高版本使用函数
 
 		ObGetObjectType = (pfnObGetObjectType)GetFunctionAddressByName(L"ObGetObjectType");
-
-
 		if (ObGetObjectType)
 		{
 			ObjectType = ObGetObjectType(Object);

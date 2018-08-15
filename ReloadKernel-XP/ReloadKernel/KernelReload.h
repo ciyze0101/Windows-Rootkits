@@ -15,12 +15,12 @@ BOOLEAN GetDeviceObjectFromFileFullName(WCHAR *FileFullName,PDEVICE_OBJECT *Real
 BOOLEAN GetWindowsRootName(WCHAR *WindowsRootName);
 
 NTSTATUS  KernelOpenFile(wchar_t *FileFullName, 
-	PHANDLE FileHandle, 
-	ACCESS_MASK DesiredAccess, 
-	ULONG FileAttributes, 
-	ULONG ShareAccess, 
-	ULONG CreateDisposition, 
-	ULONG CreateOptions);
+    PHANDLE FileHandle, 
+    ACCESS_MASK DesiredAccess, 
+    ULONG FileAttributes, 
+    ULONG ShareAccess, 
+    ULONG CreateDisposition, 
+    ULONG CreateOptions);
 
 
 
@@ -42,12 +42,12 @@ BOOLEAN InsertOriginalFirstThunk(DWORD ImageBase,DWORD ExistImageBase,PIMAGE_THU
 
 
 PVOID
-	MiFindExportedRoutine (
-	IN PVOID DllBase,
-	BOOLEAN ByName,
-	IN char *RoutineName,
-	DWORD Ordinal
-	);
+    MiFindExportedRoutine (
+    IN PVOID DllBase,
+    BOOLEAN ByName,
+    IN char *RoutineName,
+    DWORD Ordinal
+    );
 
 
 
@@ -55,10 +55,10 @@ BOOLEAN FixImportTable(BYTE *ImageBase,DWORD ExistImageBase,PDRIVER_OBJECT Drive
 
 
 BOOLEAN PeLoad(
-	WCHAR *FileFullPath,
-	BYTE **ImageModeleBase,
-	PDRIVER_OBJECT DeviceObject,
-	DWORD ExistImageBase
-	);
+    WCHAR *FileFullPath,
+    BYTE **ImageModeleBase,
+    PDRIVER_OBJECT DeviceObject,
+    DWORD ExistImageBase
+    );
 
 

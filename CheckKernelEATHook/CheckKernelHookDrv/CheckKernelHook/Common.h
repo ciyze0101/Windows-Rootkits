@@ -7,17 +7,17 @@ typedef unsigned char  BOOL, *PBOOL;
 #define SEC_IMAGE    0x01000000
 
 NTSYSAPI
-	PIMAGE_NT_HEADERS
-	NTAPI
-	RtlImageNtHeader(PVOID Base);
+    PIMAGE_NT_HEADERS
+    NTAPI
+    RtlImageNtHeader(PVOID Base);
 
 NTSTATUS 
-	MapFileInUserSpace(WCHAR* wzFilePath,IN HANDLE hProcess OPTIONAL,
-	OUT PVOID *BaseAddress,
-	OUT PSIZE_T ViewSize OPTIONAL);
+    MapFileInUserSpace(WCHAR* wzFilePath,IN HANDLE hProcess OPTIONAL,
+    OUT PVOID *BaseAddress,
+    OUT PSIZE_T ViewSize OPTIONAL);
 
-	LONG GetSSDTApiFunctionIndexFromNtdll(char* szFindFunctionName);
-	BOOL IsAddressInSystem(ULONG ulDriverBase,ULONG *ulSysModuleBase,ULONG *ulSize,char *lpszSysModuleImage);
+    LONG GetSSDTApiFunctionIndexFromNtdll(char* szFindFunctionName);
+    BOOL IsAddressInSystem(ULONG ulDriverBase,ULONG *ulSysModuleBase,ULONG *ulSize,char *lpszSysModuleImage);
 #define OP_NONE 0x00
 #define OP_MODRM 0x01
 #define OP_DATA_I8 0x02
@@ -28,4 +28,4 @@ NTSTATUS
 #define OP_REL32 0x40
 
 unsigned long __fastcall GetFunctionCodeSize(void *Proc);
-	unsigned long __fastcall SizeOfCode(void *Code, unsigned char **pOpcode);
+    unsigned long __fastcall SizeOfCode(void *Code, unsigned char **pOpcode);

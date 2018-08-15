@@ -6,7 +6,7 @@ ULONG_PTR SystemKernelModuleBase = 0;
 ULONG_PTR SystemKernelModuleSize = 0;
 ULONG_PTR ImageModuleBase;
 
-DWORD OriginalKiServiceTable;
+PVOID OriginalKiServiceTable;
 extern PSERVICE_DESCRIPTOR_TABLE    KeServiceDescriptorTable;
 PSERVICE_DESCRIPTOR_TABLE OriginalServiceDescriptorTable;
 PSERVICE_DESCRIPTOR_TABLE Safe_ServiceDescriptorTable;
@@ -22,7 +22,7 @@ ULONG ReLoadNtosCALL(WCHAR *lpwzFuncTion,ULONG ulOldNtosBase,ULONG ulReloadNtosB
 {
     UNICODE_STRING UnicodeFunctionName;
     ULONG ulOldFunctionAddress;
-    ULONG ulReloadFunctionAddress;
+    PUCHAR ulReloadFunctionAddress = NULL;
     int index=0;
     PIMAGE_DOS_HEADER pDosHeader;
     PIMAGE_NT_HEADERS NtDllHeader;
@@ -51,10 +51,10 @@ ULONG ReLoadNtosCALL(WCHAR *lpwzFuncTion,ULONG ulOldNtosBase,ULONG ulReloadNtosB
         {
             RRtlInitUnicodeString(&UnicodeFunctionName,lpwzFuncTion);
             ulOldFunctionAddress = (DWORD)RMmGetSystemRoutineAddress(&UnicodeFunctionName);
-            ulReloadFunctionAddress = ulOldFunctionAddress - ulOldNtosBase + ulReloadNtosBase; //获得重载的FuncAddr
+            ulReloadFunctionAddress = (PUCHAR)(ulOldFunctionAddress - ulOldNtosBase + ulReloadNtosBase); //获得重载的FuncAddr
             if (RMmIsAddressValid(ulReloadFunctionAddress)) //如果无效就从 导出表  获取？  应该不会无效
             {
-                return ulReloadFunctionAddress;
+                return (ULONG)ulReloadFunctionAddress;
             }
             //从导出表里获取
             ulNtDllModuleBase = ulReloadNtosBase;
@@ -62,13 +62,13 @@ ULONG ReLoadNtosCALL(WCHAR *lpwzFuncTion,ULONG ulOldNtosBase,ULONG ulReloadNtosB
             if (pDosHeader->e_magic!=IMAGE_DOS_SIGNATURE)
             {
                 KdPrint(("failed to find NtHeader\r\n"));
-                return NULL;
+                return 0;
             }
             NtDllHeader=(PIMAGE_NT_HEADERS)(ULONG)((ULONG)pDosHeader+pDosHeader->e_lfanew);
             if (NtDllHeader->Signature!=IMAGE_NT_SIGNATURE)
             {
                 KdPrint(("failed to find NtHeader\r\n"));
-                return NULL;
+                return 0;
             }
             opthdr = NtDllHeader->OptionalHeader;
             pExportTable =(IMAGE_EXPORT_DIRECTORY*)((BYTE*)ulNtDllModuleBase + opthdr.DataDirectory[ IMAGE_DIRECTORY_ENTRY_EXPORT]. VirtualAddress); //得到导出表
@@ -94,24 +94,24 @@ ULONG ReLoadNtosCALL(WCHAR *lpwzFuncTion,ULONG ulOldNtosBase,ULONG ulReloadNtosB
                 }
                 RtlFreeUnicodeString(&UnicodeExportTableFunction);
             }
-            return NULL;
+            return 0;
         }
         RtlInitUnicodeString(&UnicodeFunctionName,lpwzFuncTion);
         ulOldFunctionAddress = (DWORD)MmGetSystemRoutineAddress(&UnicodeFunctionName);
-        ulReloadFunctionAddress = ulOldFunctionAddress - ulOldNtosBase + ulReloadNtosBase;
+        ulReloadFunctionAddress = (PUCHAR)(ulOldFunctionAddress - ulOldNtosBase + ulReloadNtosBase);
 
         //KdPrint(("%ws:%08x:%08x",lpwzFuncTion,ulOldFunctionAddress,ulReloadFunctionAddress));
 
         if (MmIsAddressValid(ulReloadFunctionAddress))
         {
-            return ulReloadFunctionAddress;
+            return (ULONG)ulReloadFunctionAddress;
         }
         //         
 
     }__except(EXCEPTION_EXECUTE_HANDLER){
         KdPrint(("EXCEPTION_EXECUTE_HANDLER"));
     }
-    return NULL;
+    return 0;
 }
 
 
@@ -153,11 +153,11 @@ NTSTATUS ReLoadNtos(PDRIVER_OBJECT   DriverObject,DWORD RetAddress)
     
         //第一次都是通过  系统的原来偏移 + NewBase 获得函数地址  
         //然后通过自己的RMmGetSystemRoutineAddress获得 偏移+NewBase 获得函数地址
-        RRtlInitUnicodeString = ReLoadNtosCALL(L"RtlInitUnicodeString",SystemKernelModuleBase,ImageModuleBase);
-        RRtlCompareUnicodeString = ReLoadNtosCALL(L"RtlCompareUnicodeString",SystemKernelModuleBase,ImageModuleBase);
-        RMmGetSystemRoutineAddress = ReLoadNtosCALL(L"MmGetSystemRoutineAddress",SystemKernelModuleBase,ImageModuleBase);
-        RMmIsAddressValid = ReLoadNtosCALL(L"MmIsAddressValid",SystemKernelModuleBase,ImageModuleBase);
-        RPsGetCurrentProcess = ReLoadNtosCALL(L"PsGetCurrentProcess",SystemKernelModuleBase,ImageModuleBase);
+        RRtlInitUnicodeString = (ReloadRtlInitUnicodeString)ReLoadNtosCALL(L"RtlInitUnicodeString",SystemKernelModuleBase,ImageModuleBase);
+        RRtlCompareUnicodeString = (ReloadRtlCompareUnicodeString)ReLoadNtosCALL(L"RtlCompareUnicodeString",SystemKernelModuleBase,ImageModuleBase);
+        RMmGetSystemRoutineAddress = (ReloadMmGetSystemRoutineAddress)ReLoadNtosCALL(L"MmGetSystemRoutineAddress",SystemKernelModuleBase,ImageModuleBase);
+        RMmIsAddressValid = (ReloadMmIsAddressValid)ReLoadNtosCALL(L"MmIsAddressValid",SystemKernelModuleBase,ImageModuleBase);
+        RPsGetCurrentProcess = (ReloadPsGetCurrentProcess)ReLoadNtosCALL(L"PsGetCurrentProcess",SystemKernelModuleBase,ImageModuleBase);
         if (!RRtlInitUnicodeString ||
             !RRtlCompareUnicodeString ||
             !RMmGetSystemRoutineAddress ||
@@ -180,16 +180,14 @@ BOOLEAN InitSafeOperationModule(PDRIVER_OBJECT pDriverObject,WCHAR *SystemModule
     HANDLE hSection;
     PDWORD FixdOriginalKiServiceTable;
     PDWORD CsRootkitOriginalKiServiceTable;
-    int i=0;
+    ULONG i = 0;
 
 
     //自己peload 一个ntos*，这样就解决了跟其他安全软件的冲突啦~
-    if (!PeLoad(SystemModulePath,&ImageModuleBase,pDriverObject,KernelModuleBase))
+    if (!PeLoad(SystemModulePath,(BYTE**)&ImageModuleBase,pDriverObject,KernelModuleBase))
     {
         return FALSE;
     }
-
-    
 
     OriginalKiServiceTable = ExAllocatePool(NonPagedPool,KeServiceDescriptorTable->TableSize*sizeof(DWORD));
     if (!OriginalKiServiceTable)
@@ -197,7 +195,7 @@ BOOLEAN InitSafeOperationModule(PDRIVER_OBJECT pDriverObject,WCHAR *SystemModule
         return FALSE;
     }
     //获得SSDT基址，通过重定位表比较得到
-    if(!GetOriginalKiServiceTable(ImageModuleBase,KernelModuleBase,&OriginalKiServiceTable))
+    if(!GetOriginalKiServiceTable((BYTE*)ImageModuleBase,KernelModuleBase,(DWORD*)&OriginalKiServiceTable))
     {
         ExFreePool(OriginalKiServiceTable);
 
@@ -207,7 +205,7 @@ BOOLEAN InitSafeOperationModule(PDRIVER_OBJECT pDriverObject,WCHAR *SystemModule
     //修复SSDT函数地址  都是自己Reload的函数地址  干净的
     FixOriginalKiServiceTable((PDWORD)OriginalKiServiceTable,(DWORD)ImageModuleBase,KernelModuleBase);
 
-    OriginalServiceDescriptorTable=ExAllocatePool(NonPagedPool,sizeof(SERVICE_DESCRIPTOR_TABLE)*4);
+    OriginalServiceDescriptorTable = (PSERVICE_DESCRIPTOR_TABLE)ExAllocatePool(NonPagedPool,sizeof(SERVICE_DESCRIPTOR_TABLE)*4);
     if (OriginalServiceDescriptorTable == NULL)
     {
         ExFreePool(OriginalKiServiceTable);
@@ -221,17 +219,16 @@ BOOLEAN InitSafeOperationModule(PDRIVER_OBJECT pDriverObject,WCHAR *SystemModule
     OriginalServiceDescriptorTable->TableSize    = KeServiceDescriptorTable->TableSize;
     OriginalServiceDescriptorTable->ArgumentTable = KeServiceDescriptorTable->ArgumentTable;
 
-    CsRootkitOriginalKiServiceTable = ExAllocatePool(NonPagedPool,KeServiceDescriptorTable->TableSize*sizeof(DWORD));
+    CsRootkitOriginalKiServiceTable = (PDWORD)ExAllocatePool(NonPagedPool,KeServiceDescriptorTable->TableSize*sizeof(DWORD));
     if (CsRootkitOriginalKiServiceTable==NULL)
     {
         ExFreePool(OriginalServiceDescriptorTable);
         ExFreePool(OriginalKiServiceTable);
         return FALSE;
-
     }
     RtlZeroMemory(CsRootkitOriginalKiServiceTable,KeServiceDescriptorTable->TableSize*sizeof(DWORD));
 
-    Safe_ServiceDescriptorTable = ExAllocatePool(NonPagedPool,sizeof(SERVICE_DESCRIPTOR_TABLE)*4);
+    Safe_ServiceDescriptorTable = (PSERVICE_DESCRIPTOR_TABLE)ExAllocatePool(NonPagedPool,sizeof(SERVICE_DESCRIPTOR_TABLE)*4);
     if (Safe_ServiceDescriptorTable == NULL)
     {
         ExFreePool(OriginalServiceDescriptorTable);
@@ -243,7 +240,7 @@ BOOLEAN InitSafeOperationModule(PDRIVER_OBJECT pDriverObject,WCHAR *SystemModule
     RtlZeroMemory(Safe_ServiceDescriptorTable,sizeof(SERVICE_DESCRIPTOR_TABLE)*4);
 
     //填充原始函数地址
-    for (i=0;i<KeServiceDescriptorTable->TableSize;i++)
+    for (i = 0; i < KeServiceDescriptorTable->TableSize; i++)
     {
         CsRootkitOriginalKiServiceTable[i] = OriginalServiceDescriptorTable->ServiceTable[i];
     }

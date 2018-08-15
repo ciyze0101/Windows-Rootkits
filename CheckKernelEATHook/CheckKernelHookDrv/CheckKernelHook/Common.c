@@ -720,7 +720,7 @@ BOOL IsAddressInSystem(ULONG ulDriverBase,ULONG *ulSysModuleBase,ULONG *ulSize,c
         bInit = TRUE;
     }
     if (!bInit)
-        return NULL;
+        return FALSE;
 
     __try
     {

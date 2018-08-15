@@ -23,9 +23,9 @@ BOOLEAN GetSystemKernelModuleInfo(WCHAR **SystemKernelModulePath,PDWORD SystemKe
             0,
             &ulSize
             );
-        if (status!=STATUS_INFO_LENGTH_MISMATCH)
+        if (status != STATUS_INFO_LENGTH_MISMATCH)
         {
-            return NULL;
+            return FALSE;
         }
         pModuleList=(PMODULES)ExAllocatePool(NonPagedPool,ulSize);
         if (pModuleList)
@@ -45,14 +45,14 @@ BOOLEAN GetSystemKernelModuleInfo(WCHAR **SystemKernelModulePath,PDWORD SystemKe
         {
             if (pModuleList)
                 ExFreePool(pModuleList);
-            return NULL;
+            return FALSE;
         }
         *SystemKernelModulePath=ExAllocatePool(NonPagedPool,260*2);
         if (*SystemKernelModulePath==NULL)
         {
             *SystemKernelModuleBase=0;
             *SystemKernelModuleSize=0;
-            return NULL;
+            return FALSE;
         }
 
         lpszKernelName = pModuleList->smi[0].ModuleNameOffset+pModuleList->smi[0].ImageName;  //第一模块名称

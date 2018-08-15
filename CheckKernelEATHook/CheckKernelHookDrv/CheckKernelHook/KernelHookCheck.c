@@ -71,7 +71,7 @@ BOOLEAN KernelHookCheck(PINLINEHOOKINFO InlineHookInfo)
                     bIsZwFunction = TRUE;
                     ulIndex  = *((WORD*)(ulFunctionAddress + 1));  //得到服务号
 
-                    if (ulIndex >= NULL &&
+                    if (ulIndex > 0 &&
                         ulIndex <= OriginalServiceDescriptorTable->TableSize)
                     {
                         //对于Zw系列函数   获得系统Ntos中 对应的Nt函数的地址
@@ -126,7 +126,7 @@ VOID FillInlineHookInfo(PUCHAR ulTemp,PINLINEHOOKINFO InlineHookInfo,CHAR*   szF
 
     memset(lpszHookModuleImage,0,sizeof(lpszHookModuleImage));
     if (!IsAddressInSystem(
-        ulTemp,
+        (ULONG)ulTemp,
         &ulHookModuleBase,
         &ulHookModuleSize,
         lpszHookModuleImage))
@@ -136,7 +136,7 @@ VOID FillInlineHookInfo(PUCHAR ulTemp,PINLINEHOOKINFO InlineHookInfo,CHAR*   szF
         ulHookModuleBase = 0;
         ulHookModuleSize = 0;
     }
-    InlineHookInfo->InlineHook[IntHookCount].ulMemoryHookBase = ulTemp;
+    InlineHookInfo->InlineHook[IntHookCount].ulMemoryHookBase = (ULONG)ulTemp;
     memset(InlineHookInfo->InlineHook[IntHookCount].lpszFunction,0,sizeof(InlineHookInfo->InlineHook[IntHookCount].lpszFunction));
     memset(InlineHookInfo->InlineHook[IntHookCount].lpszHookModuleImage,0,sizeof(InlineHookInfo->InlineHook[IntHookCount].lpszHookModuleImage));
 
@@ -157,20 +157,20 @@ VOID CheckFuncByOpcode(PVOID ulReloadAddress,PINLINEHOOKINFO InlineHookInfo,CHAR
     INSTRUCTION    Inst;
     INSTRUCTION    Instb;
     ULONG ulHookFunctionAddress;
-    ULONG ulCodeSize;
+    size_t ulCodeSize;
     PUCHAR p;
     PUCHAR ulTemp;
     int Flagss;
      if (GetFunctionCodeSize(ulOldAddress) == GetFunctionCodeSize(ulReloadAddress) &&
-         memcmp(ulReloadAddress,ulOldAddress,GetFunctionCodeSize(ulOldAddress)) != NULL)
+         memcmp(ulReloadAddress,ulOldAddress,GetFunctionCodeSize(ulOldAddress)) != 0)
     {//被Hook了
         //开始扫描hooksss
         ulCodeSize = GetFunctionCodeSize(ulOldAddress);
 
-        for (p=ulOldAddress ;p< (ULONG)ulOldAddress+ulCodeSize; p++)
+        for (p = (PUCHAR)ulOldAddress ;(ULONG)p < (ULONG)ulOldAddress+ulCodeSize; p++)
         {
             //折半扫描，如果前面一半一样，则开始扫描下一半
-            if (memcmp(ulReloadAddress,ulOldAddress,ulCodeSize/2) == NULL)
+            if (memcmp(ulReloadAddress,ulOldAddress,ulCodeSize/2) == 0)
             {
                 ulCodeSize = ulCodeSize + ulCodeSize/2;
                 continue;
@@ -193,32 +193,32 @@ VOID CheckFuncByOpcode(PVOID ulReloadAddress,PINLINEHOOKINFO InlineHookInfo,CHAR
                 if(Inst.opcode==0xFF&&Inst.modrm==0x25)
                 {
                     //DIRECT_JMP
-                    ulTemp = Inst.op1.displacement;
+                    ulTemp = (PUCHAR)Inst.op1.displacement;
                 }
                 else if (Inst.opcode==0xEB)
                 {
-                    ulTemp = (ULONG)(p+Inst.op1.immediate);
+                    ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                 }
                 else if(Inst.opcode==0xE9)
                 {
                     //RELATIVE_JMP;
-                    ulTemp = (ULONG)(p+Inst.op1.immediate);
+                    ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                 }
                 break;
             case INSTRUCTION_TYPE_CALL:
                 if(Inst.opcode==0xFF&&Inst.modrm==0x15)
                 {
                     //DIRECT_CALL
-                    ulTemp = Inst.op1.displacement;
+                    ulTemp = (PUCHAR)Inst.op1.displacement;
                 }
                 else if (Inst.opcode==0x9A)
                 {
-                    ulTemp = (ULONG)(p+Inst.op1.immediate);
+                    ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                 }
                 else if(Inst.opcode==0xE8)
                 {
                     //RELATIVE_CALL;
-                    ulTemp = (ULONG)(p+Inst.op1.immediate);
+                    ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                 }
                 break;
             case INSTRUCTION_TYPE_PUSH:
@@ -230,7 +230,7 @@ VOID CheckFuncByOpcode(PVOID ulReloadAddress,PINLINEHOOKINFO InlineHookInfo,CHAR
                 if(Instb.type == INSTRUCTION_TYPE_RET)
                 {
                     //StartAddress+len-inst.length-instb.length;
-                    ulTemp = Instb.op1.displacement;
+                    ulTemp = (PUCHAR)Instb.op1.displacement;
                 }
                 break;
             }
@@ -238,13 +238,13 @@ VOID CheckFuncByOpcode(PVOID ulReloadAddress,PINLINEHOOKINFO InlineHookInfo,CHAR
                 RMmIsAddressValid(ulTemp) &&
                 RMmIsAddressValid(p))   //hook的地址也要有效才可以哦
             {
-                if (ulTemp > SystemKernelModuleBase &&
-                    ulTemp < SystemKernelModuleBase+SystemKernelModuleSize)   //太近的跳也不是
+                if ((ULONG)ulTemp > SystemKernelModuleBase &&
+                    (ULONG)ulTemp < SystemKernelModuleBase+SystemKernelModuleSize)   //太近的跳也不是
                 {
                     goto Next;
                 }
                 //ulTemp也不能小于 SystemKernelModuleBase
-                if (ulTemp < SystemKernelModuleBase)
+                if ((ULONG)ulTemp < SystemKernelModuleBase)
                 {
                     goto Next;
                 }
@@ -274,9 +274,9 @@ Cont:
                 if (*ulTemp == 0xe9 ||
                     *ulTemp == 0xe8)
                 {
-                    ulTemp = *(PULONG)(ulTemp+1)+(ULONG)(ulTemp+5);
+                    ulTemp = (PUCHAR)(*(PULONG)(ulTemp+1)+(ULONG)(ulTemp+5));
                 }
-                FillInlineHookInfo(ulTemp,InlineHookInfo,szFunctionName,p,0);  //Inline Hook
+                FillInlineHookInfo(ulTemp,InlineHookInfo,szFunctionName,(ULONG)p,0);  //Inline Hook
 Next:
                 _asm{nop}
             }
@@ -293,8 +293,8 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
     ULONG ulNextFunReloadCodeSize;
     PUCHAR i;
 
-    ULONG ulNextFunctionAddress=0;
-    ULONG ulReloadNextFunctionAddress=0;
+    PUCHAR ulNextFunctionAddress = NULL;
+    PUCHAR ulReloadNextFunctionAddress = NULL;
     BOOL bRetOK = FALSE;
     PUCHAR ulTemp;
     ULONG ulHookFunctionAddress;
@@ -315,18 +315,18 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
     __try
     {
         ulCodeSize = GetFunctionCodeSize((PVOID)ulOldAddress);
-        for (i=(PULONG)ulOldAddress;i < i+ulCodeSize;i++)
+        for (i=(PUCHAR)ulOldAddress;i < i+ulCodeSize;i++)
         {
             //扫描二次跳转
             if (*i == 0xe8)
             {
-                ulNextFunctionAddress = *(PULONG)(i+1)+(ULONG)(i+5);
+                ulNextFunctionAddress = (PUCHAR)(*(PULONG)(i+1)+(ULONG)(i+5));
                 if (MmIsAddressValid((PVOID)ulNextFunctionAddress))
                 {
                     //判断一下是否是导出函数
-                    if (IsFunctionInExportTable(ulNtDllModuleBase,ulNextFunctionAddress))
+                    if (IsFunctionInExportTable(ulNtDllModuleBase,(ULONG)ulNextFunctionAddress))
                     {
-                        return;
+                        return 0;
                     }
                     //做hook 扫描
                     ulReloadNextFunctionAddress = ulNextFunctionAddress - SystemKernelModuleBase + ImageModuleBase;
@@ -337,13 +337,13 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
                         ulNextFunReloadCodeSize = GetFunctionCodeSize(ulReloadNextFunctionAddress);
 
                         if (ulNextFunCodeSize == ulNextFunReloadCodeSize &&
-                            memcmp(ulReloadNextFunctionAddress,ulNextFunctionAddress,ulNextFunCodeSize) != NULL)
+                            memcmp(ulReloadNextFunctionAddress,ulNextFunctionAddress,ulNextFunCodeSize) != 0)
                         {
                             //被hook了
-                            for (p=ulNextFunctionAddress ;p< ulNextFunctionAddress+ulNextFunCodeSize; p++)
+                            for (p = (PUCHAR)ulNextFunctionAddress ;(ULONG)p < (ULONG)ulNextFunctionAddress+ulNextFunCodeSize; p++)
                             {
                                 //折半扫描，如果前面一半一样，则开始扫描下一半
-                                if (memcmp(ulReloadNextFunctionAddress,ulNextFunctionAddress,ulNextFunCodeSize/2) == NULL)
+                                if (memcmp(ulReloadNextFunctionAddress, ulNextFunctionAddress,ulNextFunCodeSize/2) == 0)
                                 {
                                     ulNextFunCodeSize = ulNextFunCodeSize + ulNextFunCodeSize/2;
                                     continue;
@@ -355,7 +355,7 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
                                     break;
                                 }
                                 ulHookFunctionAddress = (*(PULONG)(p + 1) + (ULONG)p + 5);  //得到地址
-                                if (!RMmIsAddressValid(ulHookFunctionAddress))
+                                if (!RMmIsAddressValid((PVOID)ulHookFunctionAddress))
                                 {
                                     continue;
                                 }
@@ -367,32 +367,32 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
                                     if(Inst.opcode==0xFF&&Inst.modrm==0x25)
                                     {
                                         //DIRECT_JMP
-                                        ulTemp = Inst.op1.displacement;
+                                        ulTemp = (PUCHAR)Inst.op1.displacement;
                                     }
                                     else if (Inst.opcode==0xEB)
                                     {
-                                        ulTemp = (ULONG)(p+Inst.op1.immediate);
+                                        ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                                     }
                                     else if(Inst.opcode==0xE9)
                                     {
                                         //RELATIVE_JMP;
-                                        ulTemp = (ULONG)(p+Inst.op1.immediate);
+                                        ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                                     }
                                     break;
                                 case INSTRUCTION_TYPE_CALL:
                                     if(Inst.opcode==0xFF&&Inst.modrm==0x15)
                                     {
                                         //DIRECT_CALL
-                                        ulTemp = Inst.op1.displacement;
+                                        ulTemp = (PUCHAR)Inst.op1.displacement;
                                     }
                                     else if (Inst.opcode==0x9A)
                                     {
-                                        ulTemp = (ULONG)(p+Inst.op1.immediate);
+                                        ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                                     }
                                     else if(Inst.opcode==0xE8)
                                     {
                                         //RELATIVE_CALL;
-                                        ulTemp = (ULONG)(p+Inst.op1.immediate);
+                                        ulTemp = (PUCHAR)(p+Inst.op1.immediate);
                                     }
                                     break;
                                 case INSTRUCTION_TYPE_PUSH:
@@ -404,7 +404,7 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
                                     if(Instb.type == INSTRUCTION_TYPE_RET)
                                     {
                                         //StartAddress+len-inst.length-instb.length;
-                                        ulTemp = Instb.op1.displacement;
+                                        ulTemp = (PUCHAR)Instb.op1.displacement;
                                     }
                                     break;
                                 }
@@ -412,13 +412,13 @@ ULONG GetNextFunctionAddress(ULONG ulNtDllModuleBase,ULONG ulOldAddress,char *fu
                                     MmIsAddressValid(ulTemp) &&
                                     MmIsAddressValid(p))   //hook的地址也要有效才可以哦
                                 {
-                                    if (ulTemp > SystemKernelModuleBase &&
-                                        ulTemp < SystemKernelModuleBase+SystemKernelModuleSize)   //太近的跳也不是
+                                    if ((ULONG)ulTemp > SystemKernelModuleBase &&
+                                        (ULONG)ulTemp < SystemKernelModuleBase+SystemKernelModuleSize)   //太近的跳也不是
                                     {
                                         goto Next;
                                     }
                                     //ulTemp也不能小于 SystemKernelModuleBase
-                                    if (ulTemp < SystemKernelModuleBase)
+                                    if ((ULONG)ulTemp < SystemKernelModuleBase)
                                     {
                                         goto Next;
                                     }
@@ -444,7 +444,7 @@ Cont:
                                     if (*ulTemp == 0xe9 ||
                                         *ulTemp == 0xe8)
                                     {
-                                        ulTemp = *(PULONG)(ulTemp+1)+(ULONG)(ulTemp+5);
+                                        ulTemp = (PUCHAR)(*(PULONG)(ulTemp+1)+(ULONG)(ulTemp+5));
                                     }
                                     FillInlineHookInfo(ulTemp+0x5,InlineHookInfo,functionName,(ULONG)p,2);
 Next:
@@ -459,13 +459,15 @@ Next:
             if (*i == 0xcc ||
                 *i == 0xc2)
             {
-                return;
+                return 0;
             }
         }
 
     }__except(EXCEPTION_EXECUTE_HANDLER){
 
     }
+
+    return 0;
 }
 
 
@@ -552,7 +554,6 @@ BOOLEAN ReSetEatHook(CHAR *lpszFunction,ULONG ulReloadKernelModule,ULONG ulKerne
     int position;
     ULONG ulFunctionOrdinal;
 
-
     //恢复的时候 用reload的ImageModuleBase
     ulModuleBase = ulReloadKernelModule;
     pDosHeader = (PIMAGE_DOS_HEADER)ulModuleBase;
@@ -628,6 +629,7 @@ BOOLEAN ReSetEatHook(CHAR *lpszFunction,ULONG ulReloadKernelModule,ULONG ulKerne
         }
     }
 
+    return TRUE;
 }
 ULONG GetEatHook(ULONG ulOldAddress,int x,ULONG ulSystemKernelModuleBase,ULONG ulSystemKernelModuleSize)
 {
@@ -643,7 +645,7 @@ ULONG GetEatHook(ULONG ulOldAddress,int x,ULONG ulSystemKernelModuleBase,ULONG u
     IMAGE_EXPORT_DIRECTORY *pExportTable;
     char *functionName = NULL;
     BOOL bIsEatHooked = FALSE;
-    int position;
+    ULONG position = 0;
     ULONG ulFunctionOrdinal;
 
     ulModuleBase = ulSystemKernelModuleBase;
@@ -675,7 +677,7 @@ ULONG GetEatHook(ULONG ulOldAddress,int x,ULONG ulSystemKernelModuleBase,ULONG u
         *(functionName+1) == 'w')
     {
         position  = *((WORD*)(functionAddress + 1));  //得到服务号
-        if (position >= NULL &&
+        if (position > 0 &&
             position <= OriginalServiceDescriptorTable->TableSize)
         {
             //得到原始地址

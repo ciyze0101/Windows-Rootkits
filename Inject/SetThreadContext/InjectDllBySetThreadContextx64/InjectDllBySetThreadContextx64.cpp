@@ -44,9 +44,9 @@ BYTE ShellCode64[64]=
     0x48,0x8D,0x0d,       // [+4] lea rcx,
     0xaa,0xbb,0xcc,0xdd,  // [+7] dll path offset =  TargetAddress- Current(0x48)[+4] -7 
 
-
-    0xe8,                 // [+11]
-    0xdd,0xcc,0xbb,0xaa,  // [+12] call LoadLibrary offset = TargetAddress - Current(0xe8)[+11] -5
+    0x48, 0xB8,
+    0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+    0xff, 0xd0,
 
     0x48,0x83,0xc4,0x28,  // [+16] add rsp,28h
     //0xcc, 调试时断下来的int 3 正常运行的时候非常傻逼的没有请掉...难怪一直死
@@ -61,30 +61,90 @@ BYTE ShellCode64[64]=
 BOOL EnableDebugPriv() ;
 BOOL StartHook(HANDLE hProcess,HANDLE hThread);
 
+
+DWORD main_GetProcessIdByName(LPWSTR pszProcessName, PDWORD pdwProcessId)
+{
+    DWORD dwProcessId = 0;
+    HANDLE hSnapshot = NULL;
+    PROCESSENTRY32 pe = { 0 };
+    DWORD eReturn = 0;
+
+    hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (NULL == hSnapshot)
+    {
+        eReturn = -1;
+        printf("CreateToolhelp32Snapshot error. GLE: %d.", GetLastError());
+        goto lblCleanup;
+    }
+
+    pe.dwSize = sizeof(PROCESSENTRY32);
+    if (FALSE == Process32First(hSnapshot, &pe))
+    {
+        eReturn = -1;
+        printf("Process32First error. GLE: %d.", GetLastError());
+        goto lblCleanup;
+    }
+
+    do
+    {
+        if (NULL != wcsstr(pe.szExeFile, pszProcessName))
+        {
+            dwProcessId = pe.th32ProcessID;
+            break;
+        }
+    } while (Process32Next(hSnapshot, &pe));
+
+    if (0 == dwProcessId)
+    {
+        printf("[*] Process '%S' could not be found.\n\n\n", pszProcessName);
+        eReturn = -1;
+        goto lblCleanup;
+    }
+
+    printf("[*] Found process '%S'. PID: %d (0x%X).\n\n\n", pszProcessName, dwProcessId, dwProcessId);
+    *pdwProcessId = dwProcessId;
+    eReturn = 0;
+
+lblCleanup:
+    if ((NULL != hSnapshot) && (INVALID_HANDLE_VALUE != hSnapshot))
+    {
+        CloseHandle(hSnapshot);
+        hSnapshot = NULL;
+    }
+    return eReturn;
+
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     EnableDebugPriv() ;
-    int ProcessId = 0;
-    cin>>ProcessId;
+
+    DWORD ProcessId = 0;
+#ifdef _WIN64
+    main_GetProcessIdByName(L"targetx64.exe", &ProcessId);
+#else
+    main_GetProcessIdByName(L"target.exe", &ProcessId);
+#endif
+    
 
     HANDLE Process = OpenProcess(PROCESS_ALL_ACCESS,NULL,ProcessId);
     if(Process == NULL)
     {
         printf("OpenProcess Fail LastError [%d]\n", GetLastError());
+        getchar();
         return 0;
     }
+    printf("Open Process [%d] OK.\n", ProcessId);
 
-    // 定义线程信息结构  
     THREADENTRY32 te32 = {sizeof(THREADENTRY32)} ;  
-    //创建系统线程快照  ss
     HANDLE hThreadSnap = CreateToolhelp32Snapshot (TH32CS_SNAPTHREAD, 0) ;  
     if ( hThreadSnap == INVALID_HANDLE_VALUE )  
     {
         printf("CreateToolhelp32Snapshot fail LastError [%d]\n", GetLastError());
+        getchar();
         return FALSE;  
     }
 
-    // 循环枚举线程信息  
     if (Thread32First(hThreadSnap, &te32))  
     {  
         do{  
@@ -97,9 +157,12 @@ int _tmain(int argc, _TCHAR* argv[])
                     break;
                 }
                 SuspendThread(Thread);
+
+                printf("start Hook.\n");
                 if (!StartHook(Process,Thread))
                 {
                     printf("失败\n");
+                    getchar();
                 }
                 else
                 {
@@ -127,6 +190,8 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
         printf("GetThreadContext Error LastError [%d]\n", GetLastError());
         return FALSE;
     }
+
+    printf("getThreadContext OK.\n");
     LPVOID LpAddr=VirtualAllocEx(hProcess,NULL,64,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
     if (LpAddr==NULL)
     {
@@ -146,31 +211,31 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
     0x48,0x8D,0x0d,       // [+4] lea rcx,
     0xaa,0xbb,0xcc,0xdd,  // [+7] dll path offset =  TargetAddress- Current(0x48)[+4] -7 
 
+    0x48, 0xB8,           // [+11]mov rax,  ptr
+    0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+    0xff, 0xd0,           // [+21] call rax
 
-    0xe8,                 // [+11]
-    0xdd,0xcc,0xbb,0xaa,  // [+12] call LoadLibrary offset = TargetAddress - Current(0xe8)[+11] -5
+    0x48,0x83,0xc4,0x28,  // [+23] add rsp,28h
 
-    0x48,0x83,0xc4,0x28,  // [+16] add rsp,28h
+    0xff,0x25,            // [+27]
+    0xaa,0xbb,0xcc,0xdd,  // [+29] jmp rip offset  = TargetAddress - Current(0xff)[+20] - 6
 
-    0xff,0x25,            // [+20]
-    0xaa,0xbb,0xcc,0xdd,  // [+22] jmp rip offset  = TargetAddress - Current(0xff)[+20] - 6
-
-    0xaa,0xbb,0xcc,0xdd,  //+26
+    0xaa,0xbb,0xcc,0xdd,  //+33
     0xaa,0xbb,0xcc,0xdd   
-    //+34
+    //+41
     */
-    DllPath=ShellCode64+34;
-    strcpy((char*)DllPath,"D:\\Dll.dll");//这里是要注入的DLL名字
-    DWORD DllNameOffset = 23;// ((BYTE*)LpAddr+34) -((BYTE*)LpAddr+4) -7 这个指令7个字节
+    DllPath=ShellCode64+41;
+    strcpy((char*)DllPath,"Dllx64.dll");//这里是要注入的DLL名字
+    DWORD DllNameOffset = 30;// ((BYTE*)LpAddr+34) -((BYTE*)LpAddr+4) -7 这个指令7个字节
     *(DWORD*)(ShellCode64+7)=(DWORD)DllNameOffset;
     ////////////////
-    DWORD LoadDllAddroffset = (BYTE*)LoadDllAAddr - ((BYTE*)LpAddr + 11) -5;  //这个指令5个字节e8 + 4addroffset
-    *(DWORD*)(ShellCode64+12)=LoadDllAddroffset;
+    DWORD64 LoadDllAddroffset = (DWORD64)LoadDllAAddr;// - ((BYTE*)LpAddr + 11) -5;  //这个指令5个字节e8 + 4addroffset
+    *(DWORD64*)(ShellCode64+13)=LoadDllAddroffset;
     //////////////////////////////////
     
     
-    *(DWORD64*)(ShellCode64+26)=ctx.Rip; //64下为rip
-    *(DWORD*)(ShellCode64+22)= (DWORD)0; //我将地址放在+26的地方，相对offset为0
+    *(DWORD64*)(ShellCode64+33)=ctx.Rip; //64下为rip
+    *(DWORD*)(ShellCode64+29)= (DWORD)0; //我将地址放在+26的地方，相对offset为0
     
 //  这里因为这样写跳转不到目标地址，故x64 应该要中转一次  相对寻址
 //     DWORD Ds = (DWORD)ctx.SegDs;
@@ -189,6 +254,8 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
         printf("set thread context error LastError [%d]\n", GetLastError());
         return FALSE;
     }
+
+    printf("SetThreadContext OK.\n");
     ResumeThread(hThread);
     return TRUE;
     
@@ -200,6 +267,7 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
         printf("GetThreadContext Error LastError [%d]\n", GetLastError());
         return FALSE;
     }
+    printf("GetThreaxContext OK.\n");
     LPVOID LpAddr=VirtualAllocEx(hProcess,NULL,64,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
     if (LpAddr==NULL)
     {
@@ -231,7 +299,7 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
     */
     _asm mov esp,esp
     DllPath=ShellCode+29;
-    strcpy((char*)DllPath,"D:\\Dllx86.dll");//这里是要注入的DLL名字
+    strcpy((char*)DllPath,"Dllx86.dll");//这里是要注入的DLL名字
     *(DWORD*)(ShellCode+3)=(DWORD)LpAddr+29;
     ////////////////
     *(DWORD*)(ShellCode+21)=LoadDllAAddr;   //loadlibrary地址放入shellcode中
@@ -251,6 +319,7 @@ BOOL StartHook(HANDLE hProcess,HANDLE hThread)
         printf("set thread context error LastError [%d]\n", GetLastError());
         return FALSE;
     }
+    printf("SetThreadContext OK.\n");
     ResumeThread(hThread);
     return TRUE;
 #endif

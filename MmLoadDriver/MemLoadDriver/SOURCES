@@ -1,0 +1,7 @@
+TARGETNAME=MemLoadDriver
+TARGETPATH=OBJ
+TARGETTYPE=DRIVER
+
+SOURCES=\
+	main.c\
+	MemLoadDriver.c

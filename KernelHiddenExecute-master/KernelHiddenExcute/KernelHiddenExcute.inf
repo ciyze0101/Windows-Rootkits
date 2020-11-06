@@ -1,0 +1,32 @@
+;
+; KernelHiddenExcute.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider=XYLab
+DriverVer=
+CatalogFile=KernelHiddenExcute.inf.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+
+
+[Strings]
+ManufacturerName="XYLab"
+ClassName=""
+DiskName="KernelHiddenExcute Source Disk"

@@ -338,5 +338,7 @@ int main(int argc,char *argv[] )
 	CloseHandle(hExe);
 	CloseHandle(hTransactedFile);
 	CloseHandle(hTransaction);
+
+    getchar();
 	return 0;
 }

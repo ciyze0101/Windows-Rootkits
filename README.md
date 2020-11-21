@@ -12,7 +12,6 @@ HideProcess by Remove ProcessList in EPROCESS struct.
 Reference [IOCTL Fuzzer v1.2](https://github.com/Cr4sh/ioctlfuzzer/tree/master/src)
 
 ## Inject
-CreateRemoteThread to Inject
 [atom-bombing-master](https://github.com/BreakingMalwareResearch/atom-bombing)<br>
 [herpaderping-main](https://github.com/jxy-s/herpaderping)<br>
 [Process-Hollowing](https://github.com/m0n0ph1/Process-Hollowing)<br> 
@@ -20,8 +19,9 @@ CreateRemoteThread to Inject
 [ReflectiveDLLInjection](https://github.com/stephenfewer/ReflectiveDLLInjection)<br> 
 SetThreadContext to Inject support x64 and x86<br> 
 SetWindowsHookEx to Inject<br> 
-UserApcInject
-ExtraWindowInject
+UserApcInject<br> 
+ExtraWindowInject<br> 
+CreateRemoteThread<br> 
 
 ## LoadImageCallBack
 Scan PE's IAT in PsSetLoadImageNotifyRoutine's callback
